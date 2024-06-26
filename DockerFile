@@ -1,0 +1,2 @@
+FROM ubuntu:22.04
+RUN apt update; DEBIAN_FRONTEND=noninteractive apt install -y g++-mingw-w64-i686 g++-mingw-w64
