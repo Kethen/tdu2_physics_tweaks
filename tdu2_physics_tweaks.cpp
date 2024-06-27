@@ -57,19 +57,29 @@ int write_data_to_fd(int fd, char *buffer, int len){
 void *f00bdb970_ref = (void *)0x00bdb970;
 uint32_t (__attribute__((stdcall)) *f00bdb970_orig)(uint32_t, uint32_t, uint32_t, uint32_t);
 uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
-	LOG_VERBOSE("converting aero performance data from 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", source, unknown_1, unknown_2, unknown_3);
+	LOG_VERBOSE("converting grip/aero performance data from 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", source, unknown_1, unknown_2, unknown_3);
 	float *source_lift_drag_ratio = (float *)(source + 0x230);
 
 	float *source_down_force_velocity = (float *)(source + 0x23c);
 	float *source_down_force_front = (float *)(source + 0x234);
 	float *source_down_force_rear = (float *)(source + 0x238);
 
+	float *source_lateral_grip_front = (float *)(source + 0x244);
+	float *source_lateral_grip_rear = (float *)(source + 0x248);
+	float *source_grip_front = (float *)(source + 0x254);
+	float *source_grip_rear = (float *)(source + 0x258);
+
+
 	uint32_t ret = f00bdb970_orig(source, unknown_1, unknown_2, unknown_3);
 
 	LOG_VERBOSE("source lift drag ratio %f\n", *source_lift_drag_ratio);
 	LOG_VERBOSE("source down force velocity %f\n", *source_down_force_velocity);
 	LOG_VERBOSE("source down force front %f\n", *source_down_force_front);
-	LOG_VERBOSE("source down force rear %f\n", *source_down_force_back);
+	LOG_VERBOSE("source down force rear %f\n", *source_down_force_rear);
+	LOG_VERBOSE("source lateral grip front %f\n", *source_lateral_grip_front);
+	LOG_VERBOSE("source lateral grip rear %f\n", *source_lateral_grip_rear);
+	LOG_VERBOSE("source grip front %f\n", *source_grip_front);
+	LOG_VERBOSE("source grip rear %f\n", *source_grip_rear);
 	return ret;
 }
 
