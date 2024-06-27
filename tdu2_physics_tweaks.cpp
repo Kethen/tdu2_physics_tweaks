@@ -54,10 +54,29 @@ int write_data_to_fd(int fd, char *buffer, int len){
 #define LOG_VERBOSE(...)
 #endif
 
+void *f00bdb970_ref = (void *)0x00bdb970;
+uint32_t (__attribute__((stdcall)) *f00bdb970_orig)(uint32_t, uint32_t, uint32_t, uint32_t);
+uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
+	LOG_VERBOSE("converting aero performance data from 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", source, unknown_1, unknown_2, unknown_3);
+	float *source_lift_drag_ratio = (float *)(source + 0x230);
+
+	float *source_down_force_velocity = (float *)(source + 0x23c);
+	float *source_down_force_front = (float *)(source + 0x234);
+	float *source_down_force_rear = (float *)(source + 0x238);
+
+	uint32_t ret = f00bdb970_orig(source, unknown_1, unknown_2, unknown_3);
+
+	LOG_VERBOSE("source lift drag ratio %f\n", *source_lift_drag_ratio);
+	LOG_VERBOSE("source down force velocity %f\n", *source_down_force_velocity);
+	LOG_VERBOSE("source down force front %f\n", *source_down_force_front);
+	LOG_VERBOSE("source down force rear %f\n", *source_down_force_back);
+	return ret;
+}
+
 void *f00df3b30_ref = (void *)0x00df3b30;
 uint32_t (__attribute__((stdcall)) *f00df3b30_orig)(uint32_t target, uint32_t source, uint32_t unknown);
 uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t source, uint32_t unknown){
-	LOG("converting performance data from 0x%08x to 0x%08x, unknown argument is 0x%08x\n", source, target, unknown);
+	LOG_VERBOSE("converting suspension performance data from 0x%08x to 0x%08x, unknown argument is 0x%08x\n", source, target, unknown);
 
 	float *converted_suspension_length_front = (float *)(target + 0x44);
 	float *converted_suspension_length_back = (float *)(target + 0x48);
@@ -141,6 +160,17 @@ int hook_functions(){
 	ret = MH_Initialize();
 	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
 		LOG("Failed initializing MinHook, %d\n", ret);
+		return -1;
+	}
+
+	ret = MH_CreateHook(f00bdb970_ref, (LPVOID)&f00bdb970_patched, (LPVOID *)&f00bdb970_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00bdb970, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00bdb970_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00bdb970, %d\n", ret);
 		return -1;
 	}
 
