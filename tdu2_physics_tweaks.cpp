@@ -54,6 +54,67 @@ int write_data_to_fd(int fd, char *buffer, int len){
 #define LOG_VERBOSE(...)
 #endif
 
+void *f00df3b30_ref = (void *)0x00df3b30;
+uint32_t (__attribute__((stdcall)) *f00df3b30_orig)(uint32_t target, uint32_t source, uint32_t unknown);
+uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t source, uint32_t unknown){
+	LOG("converting performance data from 0x%08x to 0x%08x, unknown argument is 0x%08x\n", source, target, unknown);
+
+	float *converted_suspension_length_front = (float *)(target + 0x44);
+	float *converted_suspension_length_back = (float *)(target + 0x48);
+
+	// 2 copies for some reason
+	float *converted_dampers_front_1 = (float *)(target + 0x64);
+	float *converted_dampers_rear_1 = (float *)(target + 0x68);
+	float *converted_dampers_front_2 = (float *)(target + 0x6c);
+	float *converted_dampers_rear_2 = (float *)(target + 0x70);
+
+	float *converted_ride_height_front = (float *)(target + 0x34);
+	float *converted_ride_height_rear = (float *)(target + 0x38);
+
+	float *converted_anti_roll_bar_front = (float *)(target + 0x74);
+	float *converted_anti_roll_bar_rear = (float *)(target + 0x78);
+
+	float *converted_anti_roll_bar_damping_front = (float *)(target + 0x7c);
+	float *converted_anti_roll_bar_damping_rear = (float *)(target + 0x80);
+
+	float *unknowns[128];
+
+	unknowns[0] = (float *)(target + 0x44);
+	unknowns[1] = (float *)(target + 0x48);
+	unknowns[2] = (float *)(target + 0x3c);
+	unknowns[3] = (float *)(target + 0x40);
+	unknowns[4] = (float *)(target + 0x5c);
+	unknowns[5] = (float *)(target + 0x60);
+	unknowns[6] = (float *)(target + 0x64);
+	unknowns[7] = (float *)(target + 0x68);
+	unknowns[8] = (float *)(target + 0x6c);
+	unknowns[9] = (float *)(target + 0x70);
+	unknowns[10] = (float *)(target + 0x74);
+	unknowns[11] = (float *)(target + 0x78);
+	unknowns[12] = (float *)(target + 0x7c);
+	unknowns[13] = (float *)(target + 0x80);
+	unknowns[14] = (float *)(target);
+	unknowns[15] = (float *)(target + 0x8);
+	unknowns[16] = (float *)(target + 0x10);
+	unknowns[17] = (float *)(target + 0x14);
+	unknowns[18] = (float *)(target + 0x1c);
+	unknowns[19] = (float *)(target + 0x20);
+	unknowns[20] = (float *)(target + 0x24);
+	unknowns[21] = (float *)(target + 0x28);
+	unknowns[22] = (float *)(target + 0x2c);
+	unknowns[23] = (float *)(target + 0x30);
+	unknowns[24] = (float *)(target + 0x84);
+	unknowns[25] = (float *)(target + 0x88);
+
+	uint32_t ret = f00df3b30_orig(target, source, unknown);
+	LOG_VERBOSE("converted ride height front %f\n", *converted_ride_height_front);
+	LOG_VERBOSE("converted ride height rear %f\n", *converted_ride_height_rear);
+
+	for(int i = 14;i < 26;i++){
+		LOG_VERBOSE("unknown converted value %d %f\n", i, *(unknowns[i]));
+	}
+	return ret;
+}
 
 void *f0087ebf0_ref = (void *)0x0087ebf0;
 void (__attribute__((fastcall)) *f0087ebf0_orig)(uint32_t context);
@@ -80,6 +141,17 @@ int hook_functions(){
 	ret = MH_Initialize();
 	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
 		LOG("Failed initializing MinHook, %d\n", ret);
+		return -1;
+	}
+
+	ret = MH_CreateHook(f00df3b30_ref, (LPVOID)&f00df3b30_patched, (LPVOID *)&f00df3b30_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00df3b30, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00df3b30_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00df3b30, %d\n", ret);
 		return -1;
 	}
 
