@@ -320,7 +320,8 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
 
 	uint32_t ret = f00df3b30_orig(target, source, unknown);
-	if(__builtin_return_address(5) != (void *)0x00a7d95d){
+
+	if(__builtin_return_address(4) != (void *)0x00a943b7){
 		return ret;
 	}
 
