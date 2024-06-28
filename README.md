@@ -51,6 +51,12 @@ Edit `tdu2_physics_tweaks_config.json` to adjust some aspects of tdu2 handling t
 
 Check `tdu2_physics_tweaks_log.txt` if the game refuses to start/self closes
 
+### Building
+
+On windows, install cygwin, along with mingw64-i686-gcc-g++ tool chain, then run build.sh at the project root in cygwin shell
+
+On linux, install podman from your package manager then run build_podman.sh
+
 ### Credits
 
 - TDU2VPE https://turboduck.net/forums/topic/33748-tdu2vpe-release/
