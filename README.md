@@ -1,20 +1,24 @@
 ## TDU2 Physics Tweak
 
-Tune and apply global multipliers to some aspects of tdu2 handling
+Nudge tdu2 overall car handling to your own liking :D
 
 ### Installation
 
-Place `dinput8.dll`, `MinHook.x86.dll`, `tdu2_physics_tweaks_config.json` and `tdu2_physics_tweaks_i686.asi` next to TestDrive2.exe
+Place `dinput8.dll`, `MinHook.x86.dll`, `tdu2_physics_tweaks_config.json` and `tdu2_physics_tweaks_i686.asi` next to TestDrive2.exe.
 
 ### Usage
 
-Edit `tdu2_physics_tweaks_config.json` to adjust some aspects of tdu2 handling to your liking. The following example adjusts vanilla cars to feel somewhere between tdu2 and tdu1 hc.
+After installation, edit `tdu2_physics_tweaks_config.json` to nudge the game closer to your taste.
+
+Some values can be adjusted while the game is running. Check the in-json string comments for when values are applied.
+
+The following example adjusts vanilla cars to feel somewhere between tdu2 and tdu1 hc. Time trials and license tests will become relatively more challenging.
 
 ```
 {
 	"only_modify_player_vehicle":true,
 	"overrides":{
-		"d1":"changes gravity constant, only effective per game boot",
+		"d1":"changes gravity constant, applies once on game start",
 		"gravity":-9.81,
 
 		"d2":"overrides extra gravity values in Physics.cpr, applies run time. set to 0 to remove extra downforce when airborne",
@@ -47,15 +51,19 @@ Edit `tdu2_physics_tweaks_config.json` to adjust some aspects of tdu2 handling t
 }
 ```
 
+Changed values are logged in `tdu2_physics_tweaks_log.txt` for db tuning reference.
+
 ### Trouble shooting
 
-Check `tdu2_physics_tweaks_log.txt` if the game refuses to start/self closes
+Make sure your edited config is a valid json file and contains all the keys this tool needs.
+
+Check `tdu2_physics_tweaks_log.txt` if the game refuses to start/self closes.
 
 ### Building
 
-On windows, install cygwin, along with mingw64-i686-gcc-g++ tool chain, then run build.sh at the project root in cygwin shell
+On windows, install cygwin, along with mingw64-i686-gcc-g++ tool chain, then run `build.sh` at the project root in cygwin shell.
 
-On linux, install podman from your package manager then run build_podman.sh
+On linux, install podman from your package manager then run `build_podman.sh`.
 
 ### Credits
 
