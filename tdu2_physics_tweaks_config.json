@@ -12,7 +12,7 @@
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
 		"suspension_length_front":1.0,
-		"suspension_length_back":1.0,
+		"suspension_length_rear":1.0,
 		"dampers_front":1.0,
 		"dampers_rear":1.0,
 		"ride_height_front":1.0,

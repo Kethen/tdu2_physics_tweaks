@@ -87,7 +87,7 @@ struct multipliers{
 	// some values that can be set with https://turboduck.net/forums/topic/33748-tdu2vpe-release/
 	// applies during car spawn
 	float suspension_length_front;
-	float suspension_length_back;
+	float suspension_length_rear;
 	float dampers_front;
 	float dampers_rear;
 	float ride_height_front;
@@ -130,7 +130,7 @@ void log_config(struct config *c){
 		LOG("multiplier " STR(key) ": %f\n", c->m.key);\
 	}
 	PRINT_MULTIPLIER_FLOAT(suspension_length_front);
-	PRINT_MULTIPLIER_FLOAT(suspension_length_back);
+	PRINT_MULTIPLIER_FLOAT(suspension_length_rear);
 	PRINT_MULTIPLIER_FLOAT(dampers_front);
 	PRINT_MULTIPLIER_FLOAT(dampers_rear);
 	PRINT_MULTIPLIER_FLOAT(ride_height_front);
@@ -212,7 +212,7 @@ void parse_config(){
 		} \
 	}
 	FETCH_MULTIPLIER(suspension_length_front);
-	FETCH_MULTIPLIER(suspension_length_back);
+	FETCH_MULTIPLIER(suspension_length_rear);
 	FETCH_MULTIPLIER(dampers_front);
 	FETCH_MULTIPLIER(dampers_rear);
 	FETCH_MULTIPLIER(ride_height_front);
@@ -326,7 +326,7 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	}
 
 	float *converted_suspension_length_front = (float *)(target + 0x44);
-	float *converted_suspension_length_back = (float *)(target + 0x48);
+	float *converted_suspension_length_rear = (float *)(target + 0x48);
 
 	// 2 copies for some reason
 	float *converted_dampers_front_1 = (float *)(target + 0x64);
@@ -344,26 +344,36 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_anti_roll_bar_damping_rear = (float *)(target + 0x80);
 
 	*converted_suspension_length_front *= current_config.m.suspension_length_front;
-	*converted_suspension_length_back *= current_config.m.suspension_length_back;
+	*converted_suspension_length_rear *= current_config.m.suspension_length_rear;
+
 	*converted_dampers_front_1 *= current_config.m.dampers_front;
 	*converted_dampers_rear_1 *= current_config.m.dampers_rear;
 	*converted_dampers_front_2 *= current_config.m.dampers_front;
 	*converted_dampers_rear_2 *= current_config.m.dampers_rear;
+
 	*converted_ride_height_front *= current_config.m.ride_height_front;
 	*converted_ride_height_rear *= current_config.m.ride_height_rear;
+
 	*converted_anti_roll_bar_front *= current_config.m.anti_roll_bar_front;
 	*converted_anti_roll_bar_rear *= current_config.m.anti_roll_bar_rear;
+
 	*converted_anti_roll_bar_damping_front *= current_config.m.anti_roll_bar_damping_front;
 	*converted_anti_roll_bar_damping_rear *= current_config.m.anti_roll_bar_damping_rear;
 
-	LOG("converted ride height front %f\n", *converted_ride_height_front);
-	LOG("converted ride height rear %f\n", *converted_ride_height_rear);
+	LOG("converted suspension length front %f\n", *converted_suspension_length_front);
+	LOG("converted suspension length rear %f\n", *converted_suspension_length_rear);
+
 	LOG("converted damper front 1 %f\n", *converted_dampers_front_1);
 	LOG("converted damper rear 1 %f\n", *converted_dampers_rear_1);
 	LOG("converted damper front 2 %f\n", *converted_dampers_front_2);
 	LOG("converted damper rear 2 %f\n", *converted_dampers_rear_2);
+
+	LOG("converted ride height front %f\n", *converted_ride_height_front);
+	LOG("converted ride height rear %f\n", *converted_ride_height_rear);
+
 	LOG("converted anti roll bar front %f\n", *converted_anti_roll_bar_front);
 	LOG("converted anti roll bar rear %f\n", *converted_anti_roll_bar_rear);
+
 	LOG("converted anti roll bar damping front %f\n", *converted_anti_roll_bar_damping_front);
 	LOG("converted anti roll bar damping rear %f\n", *converted_anti_roll_bar_damping_rear);
 
