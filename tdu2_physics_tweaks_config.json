@@ -1,0 +1,33 @@
+{
+	"overrides":{
+		"d1":"changes gravity constant, only effective per game boot",
+		"gravity":-9.81,
+
+		"d2":"overrides extra gravity values in Physics.cpr, applies run time",
+		"min_extra_gravity":0.1,
+		"max_extra_gravity":1.0,
+		"extra_gravity_accel_duration":0.1,
+		"extra_gravity_accel_delay":0.1
+	},
+	"multipliers":{
+		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
+		"suspension_length_front":1.0,
+		"suspension_length_back":1.0,
+		"dampers_front":1.0,
+		"dampers_rear":1.0,
+		"ride_height_front":1.0,
+		"ride_height_rear":1.0,
+		"anti_roll_bar_front":1.0,
+		"anti_roll_bar_rear":1.0,
+		"anti_roll_bar_damping_front":1.0,
+		"anti_roll_bar_damping_rear":1.0,
+		"lift_drag_ratio":1.0,
+		"down_force_velocity":1.0,
+		"down_force_front":1.0,
+		"down_force_rear":1.0,
+		"lateral_grip_front":1.0,
+		"lateral_grip_rear":1.0,
+		"grip_front":1.0,
+		"grip_rear":1.0
+	}
+}
