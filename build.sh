@@ -21,5 +21,6 @@ do
 	rm $OUT_DIR/*.o
 
 	cp tdu2_physics_tweaks_config.json $OUT_DIR/
+	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/
 done
 

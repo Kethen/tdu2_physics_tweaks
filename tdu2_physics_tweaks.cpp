@@ -29,7 +29,9 @@ int log_fd = -1;
 
 void init_logging(){
 	pthread_mutex_init(&log_mutex, NULL);
-	log_fd = open("./tdu2_physics_tweaks_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
+	const char *log_path = "./tdu2_physics_tweaks_log.txt";
+	unlink(log_path);
+	log_fd = open(log_path, O_WRONLY | O_CREAT | O_TRUNC);
 }
 
 int read_data_from_fd(int fd, char *buffer, int len){

@@ -4,7 +4,7 @@
 		"d1":"changes gravity constant, only effective per game boot",
 		"gravity":-9.81,
 
-		"d2":"overrides extra gravity values in Physics.cpr, applies run time",
+		"d2":"overrides extra gravity values in Physics.cpr, applies run time. set to 0 to remove extra downforce when airborne",
 		"min_extra_gravity":0.1,
 		"max_extra_gravity":1.0,
 		"extra_gravity_accel_duration":0.1,
