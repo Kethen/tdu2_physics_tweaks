@@ -1,4 +1,5 @@
 {
+	"only_modify_player_vehicle":true,
 	"overrides":{
 		"d1":"changes gravity constant, only effective per game boot",
 		"gravity":-9.81,

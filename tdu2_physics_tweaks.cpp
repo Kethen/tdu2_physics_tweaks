@@ -111,6 +111,7 @@ struct multipliers{
 struct config{
 	struct overrides o;
 	struct multipliers m;
+	bool only_modify_player_vehicle;
 };
 
 struct config current_config = {0};
@@ -190,6 +191,16 @@ void parse_config(){
 		exit(1);
 	}
 
+	#define FETCH_BOOL(key) { \
+		try{ \
+			incoming_config.key = parsed_config.at(STR(key)); \
+		}catch(...){ \
+			LOG("failed fetching config " STR(key) " from json, ending process :(\n") \
+		} \
+	}
+	FETCH_BOOL(only_modify_player_vehicle);
+	#undef FETCH_BOOL
+
 	#define FETCH_OVERRIDE(key) { \
 		try{ \
 			incoming_config.o.key = parsed_config.at("overrides").at(STR(key)); \
@@ -248,7 +259,7 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 	LOG_VERBOSE("converting grip/aero performance data from 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", source, unknown_1, unknown_2, unknown_3);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
 
-	if(__builtin_return_address(5) != (void *)0x00a943b7){
+	if(__builtin_return_address(5) != (void *)0x00a943b7 && current_config.only_modify_player_vehicle){
 		return f00bdb970_orig(source, unknown_1, unknown_2, unknown_3);
 	}
 
@@ -275,7 +286,7 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 	float grip_front = *source_grip_front;
 	float grip_rear  = *source_grip_rear;
 
-
+	pthread_mutex_lock(&current_config_mutex);
 	*source_lift_drag_ratio *= current_config.m.lift_drag_ratio;
 
 	*source_down_force_velocity *= current_config.m.down_force_velocity;
@@ -286,7 +297,7 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 	*source_lateral_grip_rear *= current_config.m.lateral_grip_rear;
 	*source_grip_front *= current_config.m.grip_front;
 	*source_grip_rear *= current_config.m.grip_rear;
-
+	pthread_mutex_unlock(&current_config_mutex);
 
 	uint32_t ret = f00bdb970_orig(source, unknown_1, unknown_2, unknown_3);
 
@@ -321,7 +332,7 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	uint32_t ret = f00df3b30_orig(target, source, unknown);
 
-	if(__builtin_return_address(4) != (void *)0x00a943b7){
+	if(__builtin_return_address(4) != (void *)0x00a943b7 && current_config.only_modify_player_vehicle){
 		return ret;
 	}
 
@@ -343,6 +354,7 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_anti_roll_bar_damping_front = (float *)(target + 0x7c);
 	float *converted_anti_roll_bar_damping_rear = (float *)(target + 0x80);
 
+	pthread_mutex_lock(&current_config_mutex);
 	*converted_suspension_length_front *= current_config.m.suspension_length_front;
 	*converted_suspension_length_rear *= current_config.m.suspension_length_rear;
 
@@ -359,6 +371,7 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	*converted_anti_roll_bar_damping_front *= current_config.m.anti_roll_bar_damping_front;
 	*converted_anti_roll_bar_damping_rear *= current_config.m.anti_roll_bar_damping_rear;
+	pthread_mutex_unlock(&current_config_mutex);
 
 	LOG("converted suspension length front %f\n", *converted_suspension_length_front);
 	LOG("converted suspension length rear %f\n", *converted_suspension_length_rear);
