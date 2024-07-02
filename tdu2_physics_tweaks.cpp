@@ -255,6 +255,142 @@ void parse_config(){
 	close(config_fd);
 }
 
+// replaces 00bdb970 hooking currently
+void *f00baddd0_ref = (void *)0x00baddd0;
+void (__attribute__((stdcall)) *f00baddd0_orig)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3, uint32_t unknown_4, uint32_t unknown_5, uint32_t unknown_6){
+	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
+	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
+
+	if(__builtin_return_address(4) != (void *)0x00a943b7 && __builtin_return_address(4) != (void *)0x009d5ade && current_config.only_modify_player_vehicle){
+		f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
+		return;
+	}
+
+	// unknown_2 is likely car db
+	float *source_lift_drag_ratio = (float *)(unknown_2 + 0x230);
+
+	float *source_down_force_velocity = (float *)(unknown_2 + 0x23c);
+	float *source_down_force_front = (float *)(unknown_2 + 0x234);
+	float *source_down_force_rear = (float *)(unknown_2 + 0x238);
+
+	float *source_lateral_grip_front = (float *)(unknown_2 + 0x244);
+	float *source_lateral_grip_rear = (float *)(unknown_2 + 0x248);
+	float *source_grip_front = (float *)(unknown_2 + 0x254);
+	float *source_grip_rear = (float *)(unknown_2 + 0x258);
+
+	float *source_car_abs_slip_ratio_hypersport = (float *)(unknown_2 + 0x4);
+	float *source_car_abs_slip_ratio_off = (float *)(unknown_2 + 0x8);
+	float *source_car_abs_slip_ratio_secure = (float *)(unknown_2 + 0xc);
+	float *source_car_abs_slip_ratio_sport = (float *)(unknown_2 + 0x10);
+
+	float *source_car_tcs_slip_ratio_hypersport = (float *)(unknown_2 + 0x408);
+	// off seems unused entirely
+	float *source_car_tcs_slip_ratio_off = (float *)(unknown_2 + 0x40c);
+	float *source_car_tcs_slip_ratio_secure = (float *)(unknown_2 + 0x410);
+	float *source_car_tcs_slip_ratio_sport = (float *)(unknown_2 + 0x414);
+
+	float *source_car_hand_brake_slip_ratio = (float *)(unknown_2 + 0x1ec);
+
+	int *source_brake_power = (int *)(unknown_2 + 0x68);
+
+	// unknown_4 is likely parsed Physics.cpr
+	float *source_abs_min_velocity = (float *)(unknown_4 + 0x338);
+	float *source_abs_max_velocity = (float *)(unknown_4 + 0x33c);
+	float *source_abs_slip_ratio_secure = (float *)(unknown_4 + 0x340);
+	float *source_abs_slip_ratio_sport = (float *)(unknown_4 + 0x344);
+	float *source_abs_slip_ratio_hypersport = (float *)(unknown_4 + 0x348);
+	float *source_tcs_min_velocity = (float *)(unknown_4 + 0x360);
+	float *source_tcs_max_velocity = (float *)(unknown_4 + 0x364);
+	float *source_tcs_slip_ratio_secure = (float *)(unknown_4 + 0x368);
+	float *source_tcs_slip_ratio_sport = (float *)(unknown_4 + 0x36c);
+	float *source_tcs_slip_ratio_hypersport = (float *)(unknown_4 + 0x370);
+	float *source_hand_brake_min_velocity = (float *)(unknown_4 + 0x34c);
+	float *source_hand_brake_max_velocity = (float *)(unknown_4 + 0x350);
+	float *source_hand_brake_slip_ratio_secure = (float *)(unknown_4 + 0x354);
+	float *source_hand_brake_slip_ratio_sport = (float *)(unknown_4 + 0x358);
+	float *source_hand_brake_slip_ratio_hypersport = (float *)(unknown_4 + 0x35c);
+
+	float lift_drag_ratio = *source_lift_drag_ratio;
+
+	float down_force_velocity = *source_down_force_velocity;
+	float down_force_front = *source_down_force_front;
+	float down_force_rear = *source_down_force_rear;
+
+	float lateral_grip_front = *source_lateral_grip_front;
+	float lateral_grip_rear = *source_lateral_grip_rear;
+	float grip_front = *source_grip_front;
+	float grip_rear  = *source_grip_rear;
+
+	pthread_mutex_lock(&current_config_mutex);
+	*source_lift_drag_ratio *= current_config.m.lift_drag_ratio;
+
+	*source_down_force_velocity *= current_config.m.down_force_velocity;
+	*source_down_force_front *= current_config.m.down_force_front;
+	*source_down_force_rear *= current_config.m.down_force_rear;
+
+	*source_lateral_grip_front *= current_config.m.lateral_grip_front;
+	*source_lateral_grip_rear *= current_config.m.lateral_grip_rear;
+	*source_grip_front *= current_config.m.grip_front;
+	*source_grip_rear *= current_config.m.grip_rear;
+	pthread_mutex_unlock(&current_config_mutex);
+
+	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
+
+	LOG("source lift drag ratio %f\n", *source_lift_drag_ratio);
+	LOG("source down force velocity %f\n", *source_down_force_velocity);
+	LOG("source down force front %f\n", *source_down_force_front);
+	LOG("source down force rear %f\n", *source_down_force_rear);
+	LOG("source lateral grip front %f\n", *source_lateral_grip_front);
+	LOG("source lateral grip rear %f\n", *source_lateral_grip_rear);
+	LOG("source grip front %f\n", *source_grip_front);
+	LOG("source grip rear %f\n", *source_grip_rear);
+	LOG("source brake power %d\n", *source_brake_power);
+
+	LOG_VERBOSE("source abs slip ratio hypersport %f\n", *source_car_abs_slip_ratio_hypersport);
+	LOG_VERBOSE("source abs slip ratio off %f\n", *source_car_abs_slip_ratio_off);
+	LOG_VERBOSE("source abs slip ratio secure %f\n", *source_car_abs_slip_ratio_secure);
+	LOG_VERBOSE("source abs slip ratio sport %f\n", *source_car_abs_slip_ratio_sport);
+
+	LOG_VERBOSE("source tcs slip ratio hypersport %f\n", *source_car_tcs_slip_ratio_hypersport);
+	LOG_VERBOSE("source tcs slip ratio off %f\n", *source_car_tcs_slip_ratio_off);
+	LOG_VERBOSE("source tcs slip ratio secure %f\n", *source_car_tcs_slip_ratio_secure);
+	LOG_VERBOSE("source tcs slip ratio sport %f\n", *source_car_tcs_slip_ratio_sport);
+
+	LOG_VERBOSE("source hand brake slip ratio %f\n", *source_car_hand_brake_slip_ratio);
+
+	LOG_VERBOSE("source Physics.cpr abs min velocity %f\n", *source_abs_min_velocity);
+	LOG_VERBOSE("source Physics.cpr abs max velocity %f\n", *source_abs_max_velocity);
+	LOG_VERBOSE("source Physics.cpr abs slip ratio secure %f\n", *source_abs_slip_ratio_secure);
+	LOG_VERBOSE("source Physics.cpr abs slip ratio sport %f\n", *source_abs_slip_ratio_sport);
+	LOG_VERBOSE("source Physics.cpr abs slip ratio hypersport %f\n", *source_abs_slip_ratio_hypersport);
+	LOG_VERBOSE("source Physics.cpr tcs min velocity %f\n", *source_tcs_min_velocity);
+	LOG_VERBOSE("source Physics.cpr tcs max velocity %f\n", *source_tcs_max_velocity);
+	LOG_VERBOSE("source Physics.cpr tcs slip ratio secure %f\n", *source_tcs_slip_ratio_secure);
+	LOG_VERBOSE("source Physics.cpr tcs slip ratio sport %f\n", *source_tcs_slip_ratio_sport);
+	LOG_VERBOSE("source Physics.cpr tcs slip ratio hypersport %f\n", *source_tcs_slip_ratio_hypersport);
+	LOG_VERBOSE("source Physics.cpr hand brake min velocity %f\n", *source_hand_brake_min_velocity);
+	LOG_VERBOSE("source Physics.cpr hand brake max velocity %f\n", *source_hand_brake_max_velocity);
+	LOG_VERBOSE("source Physics.cpr hand brake slip ratio secure %f\n", *source_hand_brake_slip_ratio_secure);
+	LOG_VERBOSE("source Physics.cpr hand brake slip ratio sport %f\n", *source_hand_brake_slip_ratio_sport);
+	LOG_VERBOSE("source Physics.cpr hand brake slip ratio hypersport %f\n", *source_hand_brake_slip_ratio_hypersport);
+
+	*source_lift_drag_ratio = lift_drag_ratio;
+
+	*source_down_force_velocity = down_force_velocity;
+	*source_down_force_front = down_force_front;
+	*source_down_force_rear = down_force_rear;
+
+	*source_lateral_grip_front = lateral_grip_front;
+	*source_lateral_grip_rear = lateral_grip_rear;
+	*source_grip_front = grip_front;
+	*source_grip_rear = grip_rear;
+
+	return;
+}
+
+// replaced by 00baddd0 hooking currently
+/*
 void *f00bdb970_ref = (void *)0x00bdb970;
 uint32_t (__attribute__((stdcall)) *f00bdb970_orig)(uint32_t, uint32_t, uint32_t, uint32_t);
 uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
@@ -276,6 +412,17 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 	float *source_grip_front = (float *)(source + 0x254);
 	float *source_grip_rear = (float *)(source + 0x258);
 
+	// unknown_1 is likely parsed Physics.cpr
+	float *source_abs_min_velocity = (float *)(unknown_1 + 0x338);
+	float *source_abs_max_velocity = (float *)(unknown_1 + 0x33c);
+	float *source_abs_slip_ratio_secure = (float *)(unknown_1 + 0x340);
+	float *source_abs_slip_ratio_sport = (float *)(unknown_1 + 0x344);
+	float *source_abs_slip_ratio_hypersport = (float *)(unknown_1 + 0x348);
+	float *source_tcs_min_velocity = (float *)(unknown_1 + 0x360);
+	float *source_tcs_max_velocity = (float *)(unknown_1 + 0x364);
+	float *source_tcs_slip_ratio_secure = (float *)(unknown_1 + 0x368);
+	float *source_tcs_slip_ratio_sport = (float *)(unknown_1 + 0x36c);
+	float *source_tcs_slip_ratio_hypersport = (float *)(unknown_1 + 0x370);
 
 	float lift_drag_ratio = *source_lift_drag_ratio;
 
@@ -311,6 +458,17 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 	LOG("source lateral grip rear %f\n", *source_lateral_grip_rear);
 	LOG("source grip front %f\n", *source_grip_front);
 	LOG("source grip rear %f\n", *source_grip_rear);
+	LOG_VERBOSE("source abs min velocity %f\n", *source_abs_min_velocity);
+	LOG_VERBOSE("source abs max velocity %f\n", *source_abs_max_velocity);
+	LOG_VERBOSE("source abs slip ratio secure %f\n", *source_abs_slip_ratio_secure);
+	LOG_VERBOSE("source abs slip ratio sport %f\n", *source_abs_slip_ratio_sport);
+	LOG_VERBOSE("source abs slip ratio hypersport %f\n", *source_abs_slip_ratio_hypersport);
+	LOG_VERBOSE("source tcs min velocity %f\n", *source_tcs_min_velocity);
+	LOG_VERBOSE("source tcs max velocity %f\n", *source_tcs_max_velocity);
+	LOG_VERBOSE("source tcs slip ratio secure %f\n", *source_tcs_slip_ratio_secure);
+	LOG_VERBOSE("source tcs slip ratio sport %f\n", *source_tcs_slip_ratio_sport);
+	LOG_VERBOSE("source tcs slip ratio hypersport %f\n", *source_tcs_slip_ratio_hypersport);
+
 
 	*source_lift_drag_ratio = lift_drag_ratio;
 
@@ -325,6 +483,7 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 
 	return ret;
 }
+*/
 
 void *f00df3b30_ref = (void *)0x00df3b30;
 uint32_t (__attribute__((stdcall)) *f00df3b30_orig)(uint32_t target, uint32_t source, uint32_t unknown);
@@ -429,6 +588,18 @@ int hook_functions(){
 		return -1;
 	}
 
+	ret = MH_CreateHook(f00baddd0_ref, (LPVOID)&f00baddd0_patched, (LPVOID *)&f00baddd0_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00baddd0, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00baddd0_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00baddd0, %d\n", ret);
+		return -1;
+	}
+
+	/*
 	ret = MH_CreateHook(f00bdb970_ref, (LPVOID)&f00bdb970_patched, (LPVOID *)&f00bdb970_orig);
 	if(ret != MH_OK){
 		LOG("Failed creating hook for 0x00bdb970, %d\n", ret);
@@ -439,6 +610,7 @@ int hook_functions(){
 		LOG("Failed enableing hook for 0x00bdb970, %d\n", ret);
 		return -1;
 	}
+	*/
 
 	ret = MH_CreateHook(f00df3b30_ref, (LPVOID)&f00df3b30_patched, (LPVOID *)&f00df3b30_orig);
 	if(ret != MH_OK){
