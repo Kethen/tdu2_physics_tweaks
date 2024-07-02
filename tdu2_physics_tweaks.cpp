@@ -311,16 +311,54 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	float *source_hand_brake_slip_ratio_sport = (float *)(unknown_4 + 0x358);
 	float *source_hand_brake_slip_ratio_hypersport = (float *)(unknown_4 + 0x35c);
 
-	float lift_drag_ratio = *source_lift_drag_ratio;
+	#define BACKUP_FLOAT(name) \
+		float bak_##name = *source_##name;
 
-	float down_force_velocity = *source_down_force_velocity;
-	float down_force_front = *source_down_force_front;
-	float down_force_rear = *source_down_force_rear;
+	#define BACKUP_INT(name) \
+		int bak_##name = *source_##name;
 
-	float lateral_grip_front = *source_lateral_grip_front;
-	float lateral_grip_rear = *source_lateral_grip_rear;
-	float grip_front = *source_grip_front;
-	float grip_rear  = *source_grip_rear;
+	BACKUP_FLOAT(lift_drag_ratio);
+
+	BACKUP_FLOAT(down_force_velocity);
+	BACKUP_FLOAT(down_force_front);
+	BACKUP_FLOAT(down_force_rear);
+
+	BACKUP_FLOAT(lateral_grip_front);
+	BACKUP_FLOAT(lateral_grip_rear);
+	BACKUP_FLOAT(grip_front);
+	BACKUP_FLOAT(grip_rear);
+	BACKUP_FLOAT(car_abs_slip_ratio_hypersport);
+	BACKUP_FLOAT(car_abs_slip_ratio_off);
+	BACKUP_FLOAT(car_abs_slip_ratio_secure);
+	BACKUP_FLOAT(car_abs_slip_ratio_sport);
+
+	BACKUP_FLOAT(car_tcs_slip_ratio_hypersport);
+	BACKUP_FLOAT(car_tcs_slip_ratio_off);
+	BACKUP_FLOAT(car_tcs_slip_ratio_secure);
+	BACKUP_FLOAT(car_tcs_slip_ratio_sport);
+
+	BACKUP_FLOAT(car_hand_brake_slip_ratio);
+
+	BACKUP_INT(brake_power);
+
+	BACKUP_FLOAT(abs_min_velocity);
+	BACKUP_FLOAT(abs_max_velocity);
+	BACKUP_FLOAT(abs_slip_ratio_secure);
+	BACKUP_FLOAT(abs_slip_ratio_sport);
+	BACKUP_FLOAT(abs_slip_ratio_hypersport);
+	BACKUP_FLOAT(tcs_min_velocity);
+	BACKUP_FLOAT(tcs_max_velocity);
+	BACKUP_FLOAT(tcs_slip_ratio_secure);
+	BACKUP_FLOAT(tcs_slip_ratio_sport);
+	BACKUP_FLOAT(tcs_slip_ratio_hypersport);
+	BACKUP_FLOAT(hand_brake_min_velocity);
+	BACKUP_FLOAT(hand_brake_max_velocity);
+	BACKUP_FLOAT(hand_brake_slip_ratio_secure);
+	BACKUP_FLOAT(hand_brake_slip_ratio_sport);
+	BACKUP_FLOAT(hand_brake_slip_ratio_hypersport);
+
+	#undef BACKUP_FLOAT
+	#undef BACKUP_INT
 
 	pthread_mutex_lock(&current_config_mutex);
 	*source_lift_drag_ratio *= current_config.m.lift_drag_ratio;
@@ -338,14 +376,15 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
 	LOG("source lift drag ratio %f\n", *source_lift_drag_ratio);
+
 	LOG("source down force velocity %f\n", *source_down_force_velocity);
 	LOG("source down force front %f\n", *source_down_force_front);
 	LOG("source down force rear %f\n", *source_down_force_rear);
+
 	LOG("source lateral grip front %f\n", *source_lateral_grip_front);
 	LOG("source lateral grip rear %f\n", *source_lateral_grip_rear);
 	LOG("source grip front %f\n", *source_grip_front);
 	LOG("source grip rear %f\n", *source_grip_rear);
-	LOG("source brake power %d\n", *source_brake_power);
 
 	LOG_VERBOSE("source abs slip ratio hypersport %f\n", *source_car_abs_slip_ratio_hypersport);
 	LOG_VERBOSE("source abs slip ratio off %f\n", *source_car_abs_slip_ratio_off);
@@ -358,6 +397,8 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("source tcs slip ratio sport %f\n", *source_car_tcs_slip_ratio_sport);
 
 	LOG_VERBOSE("source hand brake slip ratio %f\n", *source_car_hand_brake_slip_ratio);
+
+	LOG("source brake power %d\n", *source_brake_power);
 
 	LOG_VERBOSE("source Physics.cpr abs min velocity %f\n", *source_abs_min_velocity);
 	LOG_VERBOSE("source Physics.cpr abs max velocity %f\n", *source_abs_max_velocity);
@@ -375,16 +416,52 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("source Physics.cpr hand brake slip ratio sport %f\n", *source_hand_brake_slip_ratio_sport);
 	LOG_VERBOSE("source Physics.cpr hand brake slip ratio hypersport %f\n", *source_hand_brake_slip_ratio_hypersport);
 
-	*source_lift_drag_ratio = lift_drag_ratio;
 
-	*source_down_force_velocity = down_force_velocity;
-	*source_down_force_front = down_force_front;
-	*source_down_force_rear = down_force_rear;
+	#define RESTORE_VALUE(name) \
+		*source_##name = bak_##name;
 
-	*source_lateral_grip_front = lateral_grip_front;
-	*source_lateral_grip_rear = lateral_grip_rear;
-	*source_grip_front = grip_front;
-	*source_grip_rear = grip_rear;
+	RESTORE_VALUE(lift_drag_ratio);
+
+	RESTORE_VALUE(down_force_velocity);
+	RESTORE_VALUE(down_force_front);
+	RESTORE_VALUE(down_force_rear);
+
+	RESTORE_VALUE(lateral_grip_front);
+	RESTORE_VALUE(lateral_grip_rear);
+	RESTORE_VALUE(grip_front);
+	RESTORE_VALUE(grip_rear);
+
+	RESTORE_VALUE(car_abs_slip_ratio_hypersport);
+	RESTORE_VALUE(car_abs_slip_ratio_off);
+	RESTORE_VALUE(car_abs_slip_ratio_secure);
+	RESTORE_VALUE(car_abs_slip_ratio_sport);
+
+	RESTORE_VALUE(car_tcs_slip_ratio_hypersport);
+	RESTORE_VALUE(car_tcs_slip_ratio_off);
+	RESTORE_VALUE(car_tcs_slip_ratio_secure);
+	RESTORE_VALUE(car_tcs_slip_ratio_sport);
+
+	RESTORE_VALUE(car_hand_brake_slip_ratio);
+
+	RESTORE_VALUE(brake_power);
+
+	RESTORE_VALUE(abs_min_velocity);
+	RESTORE_VALUE(abs_max_velocity);
+	RESTORE_VALUE(abs_slip_ratio_secure);
+	RESTORE_VALUE(abs_slip_ratio_sport);
+	RESTORE_VALUE(abs_slip_ratio_hypersport);
+	RESTORE_VALUE(tcs_min_velocity);
+	RESTORE_VALUE(tcs_max_velocity);
+	RESTORE_VALUE(tcs_slip_ratio_secure);
+	RESTORE_VALUE(tcs_slip_ratio_sport);
+	RESTORE_VALUE(tcs_slip_ratio_hypersport);
+	RESTORE_VALUE(hand_brake_min_velocity);
+	RESTORE_VALUE(hand_brake_max_velocity);
+	RESTORE_VALUE(hand_brake_slip_ratio_secure);
+	RESTORE_VALUE(hand_brake_slip_ratio_sport);
+	RESTORE_VALUE(hand_brake_slip_ratio_hypersport);
+
+	#undef RESTORE_VALUE
 
 	return;
 }
