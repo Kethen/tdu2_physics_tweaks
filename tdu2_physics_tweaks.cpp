@@ -74,6 +74,12 @@ int write_data_to_fd(int fd, char *buffer, int len){
 #define LOG_VERBOSE(...)
 #endif
 
+struct global_store{
+	float brake_pedal_value;
+};
+
+struct global_store global = {0};
+
 struct overrides{
 	// sets on boot only, part of the physics engine seems obfuscated and rather annoying to hook run time
 	float gravity;
@@ -83,6 +89,11 @@ struct overrides{
 	float max_extra_gravity;
 	float extra_gravity_accel_duration;
 	float extra_gravity_accel_delay;
+
+	// performes multiple value changes, applies on car spawn
+	bool reduce_abs;
+	bool reduce_tcs;
+	bool reduce_hand_brake_abs;
 };
 
 struct multipliers{
@@ -108,6 +119,8 @@ struct multipliers{
 	float lateral_grip_rear;
 	float grip_front;
 	float grip_rear;
+
+	float brake_power;
 };
 
 struct config{
@@ -190,7 +203,7 @@ void parse_config(){
 		parsed_config = json::parse(std::string(buffer, bytes_read));
 	}catch(...){
 		LOG("failed parsing tdu2_physics_tweaks_config.json, ending process :(\n");
-		exit(1);
+		exit(1); \
 	}
 
 	#define FETCH_BOOL(key) { \
@@ -198,6 +211,7 @@ void parse_config(){
 			incoming_config.key = parsed_config.at(STR(key)); \
 		}catch(...){ \
 			LOG("failed fetching config " STR(key) " from json, ending process :(\n") \
+			exit(1); \
 		} \
 	}
 	FETCH_BOOL(only_modify_player_vehicle);
@@ -208,6 +222,7 @@ void parse_config(){
 			incoming_config.o.key = parsed_config.at("overrides").at(STR(key)); \
 		}catch(...){ \
 			LOG("failed fetching override " STR(key) " from json, ending process :(\n"); \
+			exit(1); \
 		} \
 	}
 	FETCH_OVERRIDE(gravity);
@@ -215,6 +230,9 @@ void parse_config(){
 	FETCH_OVERRIDE(max_extra_gravity);
 	FETCH_OVERRIDE(extra_gravity_accel_duration);
 	FETCH_OVERRIDE(extra_gravity_accel_delay);
+	FETCH_OVERRIDE(reduce_abs);
+	FETCH_OVERRIDE(reduce_tcs);
+	FETCH_OVERRIDE(reduce_hand_brake_abs);
 	#undef FETCH_OVERRIDE
 
 	#define FETCH_MULTIPLIER(key) { \
@@ -222,6 +240,7 @@ void parse_config(){
 			incoming_config.m.key = parsed_config.at("multipliers").at(STR(key)); \
 		}catch(...){ \
 			LOG("failed fetching multiplier " STR(key) " from json, ending process :(\n"); \
+			exit(1); \
 		} \
 	}
 	FETCH_MULTIPLIER(suspension_length_front);
@@ -242,7 +261,8 @@ void parse_config(){
 	FETCH_MULTIPLIER(lateral_grip_rear);
 	FETCH_MULTIPLIER(grip_front);
 	FETCH_MULTIPLIER(grip_rear);
-	#undef FETCH_OVERRIDE
+	FETCH_MULTIPLIER(brake_power);
+	#undef FETCH_MULTIPLIER
 
 	if(memcmp(&current_config, &incoming_config, sizeof(struct config)) != 0){
 		pthread_mutex_lock(&current_config_mutex);
@@ -253,6 +273,84 @@ void parse_config(){
 
 	free(buffer);
 	close(config_fd);
+}
+
+// unknown call convention, crashes
+/*
+void *f00bbc650_ref = (void *)0x00bbc650;
+void (__attribute__((thiscall)) *f00bbc650_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3);
+void __attribute__((thiscall)) f00bbc650_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
+	f00bbc650_orig(unknown_1, unknown_2, unknown_3);
+
+	float *brake_pedal_value = (float *)(unknown_1 + 0x284);
+	global.brake_pedal_value = *brake_pedal_value;
+	//if(__builtin_return_address(1) == (void *)0x2a86ea10){
+	if(global.brake_pedal_value > 0.1){
+		LOG_VERBOSE("brake pedal value %f\n", global.brake_pedal_value);
+		LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
+	}
+}
+*/
+
+// can't easily identify player
+/*
+void *f0086ad90_ref = (void *)0x0086ad90;
+void (__attribute__((fastcall)) *f0086ad90_orig)(uint32_t unknown_1);
+void __attribute__((fastcall)) f0086ad90_patched(uint32_t unknown_1){
+	float *brake_pedal_value = (float *)(*(uint32_t *)(unknown_1 + 8) + 0xd4);
+	global.brake_pedal_value = *brake_pedal_value;
+	//if(__builtin_return_address(1) == (void *)0x2a86ea10){
+	if(global.brake_pedal_value > 0.1){
+		LOG_VERBOSE("brake pedal value %f\n", global.brake_pedal_value);
+		LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
+	}
+	f0086ad90_orig(unknown_1);
+}
+*/
+
+void *f00bacd50_ref = (void *)0x00bacd50;
+void (__attribute__((stdcall)) *f00bacd50_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3);
+void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
+	LOG_VERBOSE("monitoring some slip ratio memory moving, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", unknown_1, unknown_2, unknown_3);
+	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3));
+
+	float *slip_ratio_hypersport = (float *)(unknown_1 + 0x68);
+	float *slip_ratio_off = (float *)(unknown_1 + 0x78);
+	float *slip_ratio_secure = (float *)(unknown_1 + 0x60);
+	float *slip_ratio_sport = (float *)(unknown_1 + 0x64);
+	float *brake_pedal_level = (float *)(unknown_3 + 0x4);
+
+	if(!current_config.o.reduce_abs || 900000 > *slip_ratio_hypersport){
+		f00bacd50_orig(unknown_1, unknown_2, unknown_3);
+		return;
+	}
+
+	#define BACKUP_FLOAT(key) \
+		float bak_##key = *key;
+	BACKUP_FLOAT(slip_ratio_hypersport);
+	BACKUP_FLOAT(slip_ratio_off);
+	BACKUP_FLOAT(slip_ratio_secure);
+	BACKUP_FLOAT(slip_ratio_sport);
+	#undef BACKUP_FLOAT
+
+	*slip_ratio_hypersport = -0.0001;
+
+	LOG_VERBOSE("slip ratio hypersport %f\n", *slip_ratio_hypersport);
+	LOG_VERBOSE("slip ratio off %f\n", *slip_ratio_off);
+	LOG_VERBOSE("slip ratio secure %f\n", *slip_ratio_secure);
+	LOG_VERBOSE("slip ratio sport %f\n", *slip_ratio_sport);
+	LOG_VERBOSE("brake pedal level %f\n", *brake_pedal_level);
+	f00bacd50_orig(unknown_1, unknown_2, unknown_3);
+
+	#define RESTORE_VALUE(key) \
+		*key = bak_##key;
+	RESTORE_VALUE(slip_ratio_hypersport);
+	RESTORE_VALUE(slip_ratio_off);
+	RESTORE_VALUE(slip_ratio_secure);
+	RESTORE_VALUE(slip_ratio_sport);
+	#undef RESTORE_VALUE
+
+	return;
 }
 
 // replaces 00bdb970 hooking currently
@@ -371,7 +469,40 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	*source_lateral_grip_rear *= current_config.m.lateral_grip_rear;
 	*source_grip_front *= current_config.m.grip_front;
 	*source_grip_rear *= current_config.m.grip_rear;
+
+	*source_brake_power = *source_brake_power * current_config.m.brake_power;
 	pthread_mutex_unlock(&current_config_mutex);
+
+	if(current_config.o.reduce_abs){
+		*source_car_abs_slip_ratio_hypersport = 999990;
+		*source_car_abs_slip_ratio_off = 999991;
+		*source_car_abs_slip_ratio_secure = 999992;
+		*source_car_abs_slip_ratio_sport = 999993;
+
+		*source_abs_slip_ratio_secure = -0.2;
+		*source_abs_slip_ratio_sport = -0.2;
+		*source_abs_slip_ratio_hypersport = -0.2;
+	}
+
+	if(current_config.o.reduce_tcs){
+		*source_car_tcs_slip_ratio_hypersport = -9999.0;
+		*source_car_tcs_slip_ratio_off = -9999.0;
+		*source_car_tcs_slip_ratio_secure = -9999.0;
+		*source_car_tcs_slip_ratio_sport = -9999.0;
+
+		*source_tcs_slip_ratio_secure = -9999.0;
+		*source_tcs_slip_ratio_sport = -9999.0;
+		*source_tcs_slip_ratio_hypersport = -9999.0;
+	}
+
+	if(current_config.o.reduce_hand_brake_abs){
+		// -0.2 as well?
+		*source_car_hand_brake_slip_ratio = -0.2;
+
+		*source_hand_brake_slip_ratio_secure = -0.6;
+		*source_hand_brake_slip_ratio_sport = -0.6;
+		*source_hand_brake_slip_ratio_hypersport = -0.6;
+	}
 
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
@@ -662,6 +793,42 @@ int hook_functions(){
 	ret = MH_Initialize();
 	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
 		LOG("Failed initializing MinHook, %d\n", ret);
+		return -1;
+	}
+
+	/*
+	ret = MH_CreateHook(f00bbc650_ref, (LPVOID)&f00bbc650_patched, (LPVOID *)&f00bbc650_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00bbc650, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00bbc650_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00bbc650, %d\n", ret);
+		return -1;
+	}*/
+
+	/*
+	ret = MH_CreateHook(f0086ad90_ref, (LPVOID)&f0086ad90_patched, (LPVOID *)&f0086ad90_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x0086ad90, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f0086ad90_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x0086ad90, %d\n", ret);
+		return -1;
+	}
+	*/
+
+	ret = MH_CreateHook(f00bacd50_ref, (LPVOID)&f00bacd50_patched, (LPVOID *)&f00bacd50_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00bacd50, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00bacd50_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00bacd50, %d\n", ret);
 		return -1;
 	}
 

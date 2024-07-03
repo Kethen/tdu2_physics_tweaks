@@ -25,7 +25,12 @@ The following example adjusts vanilla cars to feel somewhere between tdu2 and td
 		"min_extra_gravity":0.0,
 		"max_extra_gravity":0.0,
 		"extra_gravity_accel_duration":0.1,
-		"extra_gravity_accel_delay":0.1
+		"extra_gravity_accel_delay":0.1,
+
+		"d3":"reduce abs, traction control, handbrake abs, applies on car spawn/change",
+		"reduce_abs":true,
+		"reduce_tcs":true,
+		"reduce_hand_brake_abs":true
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
@@ -46,7 +51,8 @@ The following example adjusts vanilla cars to feel somewhere between tdu2 and td
 		"lateral_grip_front":0.6,
 		"lateral_grip_rear":0.6,
 		"grip_front":0.7,
-		"grip_rear":0.7
+		"grip_rear":0.7,
+		"brake_power":1.0
 	}
 }
 ```

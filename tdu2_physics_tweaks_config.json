@@ -8,7 +8,12 @@
 		"min_extra_gravity":0.1,
 		"max_extra_gravity":1.0,
 		"extra_gravity_accel_duration":0.1,
-		"extra_gravity_accel_delay":0.1
+		"extra_gravity_accel_delay":0.1,
+
+		"d3":"reduce abs, traction control, handbrake abs, applies on car spawn/change",
+		"reduce_abs":false,
+		"reduce_tcs":false,
+		"reduce_hand_brake_abs":false
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
@@ -29,6 +34,7 @@
 		"lateral_grip_front":1.0,
 		"lateral_grip_rear":1.0,
 		"grip_front":1.0,
-		"grip_rear":1.0
+		"grip_rear":1.0,
+		"brake_power":1.0
 	}
 }
