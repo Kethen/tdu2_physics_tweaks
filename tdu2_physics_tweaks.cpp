@@ -331,9 +331,22 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 	BACKUP_FLOAT(slip_ratio_off);
 	BACKUP_FLOAT(slip_ratio_secure);
 	BACKUP_FLOAT(slip_ratio_sport);
+	BACKUP_FLOAT(brake_pedal_level);
 	#undef BACKUP_FLOAT
 
-	*slip_ratio_hypersport = -0.0001;
+	// the current observation is pretty cursed
+	// the slip ratio that affects turning is almost constant to the value given by db here, no matter what brake input is given with different brake power values
+	// scale slip ratio here against brake pedal level to simulate lock up
+
+	// make it gran turismo 6-ish, only full locks at like 80%
+	// 0 to -0.2 from 0% to 75%
+	// -0.2 to -0.7 from 75% to 100%
+	float lower = *brake_pedal_level >= 0.75? 1.0: *brake_pedal_level / 0.75;
+	float upper = *brake_pedal_level > 0.75? (*brake_pedal_level - 0.75) / 0.25: 0;
+	float new_slip_ratio = lower * (-0.2) + upper * (-0.5);
+
+	*slip_ratio_hypersport = new_slip_ratio;
+	*slip_ratio_off = new_slip_ratio;
 
 	LOG_VERBOSE("slip ratio hypersport %f\n", *slip_ratio_hypersport);
 	LOG_VERBOSE("slip ratio off %f\n", *slip_ratio_off);
@@ -348,6 +361,7 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 	RESTORE_VALUE(slip_ratio_off);
 	RESTORE_VALUE(slip_ratio_secure);
 	RESTORE_VALUE(slip_ratio_sport);
+	RESTORE_VALUE(brake_pedal_level);
 	#undef RESTORE_VALUE
 
 	return;
@@ -474,6 +488,9 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	pthread_mutex_unlock(&current_config_mutex);
 
 	if(current_config.o.reduce_abs){
+		*source_abs_min_velocity = 0;
+		*source_abs_max_velocity = 0;
+
 		*source_car_abs_slip_ratio_hypersport = 999990;
 		*source_car_abs_slip_ratio_off = 999991;
 		*source_car_abs_slip_ratio_secure = 999992;
@@ -485,6 +502,9 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	}
 
 	if(current_config.o.reduce_tcs){
+		*source_abs_min_velocity = 0;
+		*source_abs_max_velocity = 0;
+
 		*source_car_tcs_slip_ratio_hypersport = -9999.0;
 		*source_car_tcs_slip_ratio_off = -9999.0;
 		*source_car_tcs_slip_ratio_secure = -9999.0;
