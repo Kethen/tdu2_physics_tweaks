@@ -10,10 +10,10 @@
 		"extra_gravity_accel_duration":0.1,
 		"extra_gravity_accel_delay":0.1,
 
-		"d3":"reduce abs, traction control, handbrake abs, applies on car spawn/change",
-		"reduce_abs":false,
-		"reduce_tcs":false,
-		"reduce_hand_brake_abs":false
+		"d3":"beta, disabling abs and tcs, weird to do in tdu2, let me know how each item feels",
+		"abs_off":false,
+		"tcs_off":false,
+		"hand_brake_abs_off":false
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",

@@ -90,10 +90,10 @@ struct overrides{
 	float extra_gravity_accel_duration;
 	float extra_gravity_accel_delay;
 
-	// performes multiple value changes, applies on car spawn
-	bool reduce_abs;
-	bool reduce_tcs;
-	bool reduce_hand_brake_abs;
+	// beta, current investigation seems to suggest that it does not even derive brake wheel slip from brake power and pedal input
+	bool abs_off;
+	bool tcs_off;
+	bool hand_brake_abs_off;
 };
 
 struct multipliers{
@@ -230,9 +230,9 @@ void parse_config(){
 	FETCH_OVERRIDE(max_extra_gravity);
 	FETCH_OVERRIDE(extra_gravity_accel_duration);
 	FETCH_OVERRIDE(extra_gravity_accel_delay);
-	FETCH_OVERRIDE(reduce_abs);
-	FETCH_OVERRIDE(reduce_tcs);
-	FETCH_OVERRIDE(reduce_hand_brake_abs);
+	FETCH_OVERRIDE(abs_off);
+	FETCH_OVERRIDE(tcs_off);
+	FETCH_OVERRIDE(hand_brake_abs_off);
 	#undef FETCH_OVERRIDE
 
 	#define FETCH_MULTIPLIER(key) { \
@@ -311,7 +311,7 @@ void __attribute__((fastcall)) f0086ad90_patched(uint32_t unknown_1){
 void *f00bacd50_ref = (void *)0x00bacd50;
 void (__attribute__((stdcall)) *f00bacd50_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3);
 void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
-	LOG_VERBOSE("monitoring some slip ratio memory moving, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", unknown_1, unknown_2, unknown_3);
+	LOG_VERBOSE("fixing brake wheel locking mechanism, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x\n", unknown_1, unknown_2, unknown_3);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3));
 
 	float *slip_ratio_hypersport = (float *)(unknown_1 + 0x68);
@@ -320,7 +320,8 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 	float *slip_ratio_sport = (float *)(unknown_1 + 0x64);
 	float *brake_pedal_level = (float *)(unknown_3 + 0x4);
 
-	if(!current_config.o.reduce_abs || 900000 > *slip_ratio_hypersport){
+	// flagged from 00baddd0 hook
+	if(900000 > *slip_ratio_hypersport){
 		f00bacd50_orig(unknown_1, unknown_2, unknown_3);
 		return;
 	}
@@ -487,7 +488,7 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	*source_brake_power = *source_brake_power * current_config.m.brake_power;
 	pthread_mutex_unlock(&current_config_mutex);
 
-	if(current_config.o.reduce_abs){
+	if(current_config.o.abs_off){
 		*source_abs_min_velocity = 0;
 		*source_abs_max_velocity = 0;
 
@@ -501,9 +502,9 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		*source_abs_slip_ratio_hypersport = -0.2;
 	}
 
-	if(current_config.o.reduce_tcs){
-		*source_abs_min_velocity = 0;
-		*source_abs_max_velocity = 0;
+	if(current_config.o.tcs_off){
+		*source_tcs_min_velocity = 0;
+		*source_tcs_max_velocity = 0;
 
 		*source_car_tcs_slip_ratio_hypersport = -9999.0;
 		*source_car_tcs_slip_ratio_off = -9999.0;
@@ -515,8 +516,10 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		*source_tcs_slip_ratio_hypersport = -9999.0;
 	}
 
-	if(current_config.o.reduce_hand_brake_abs){
-		// -0.2 as well?
+	if(current_config.o.hand_brake_abs_off){
+		*source_hand_brake_min_velocity = 0;
+		*source_hand_brake_max_velocity = 0;
+
 		*source_car_hand_brake_slip_ratio = -0.2;
 
 		*source_hand_brake_slip_ratio_secure = -0.6;
