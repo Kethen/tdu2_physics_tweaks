@@ -30,7 +30,11 @@ The following example adjusts vanilla cars to feel somewhere between tdu2 and td
 		"d3":"beta, disabling abs and tcs, weird to do in tdu2, let me know how each item feels",
 		"abs_off":true,
 		"tcs_off":true,
-		"hand_brake_abs_off":true
+		"hand_brake_abs_off":true,
+
+		"d4":"override angular damping values in Physics.cpr, higher values means more resistance to rotations (both turning and rolling), applies on car spawn/change",
+		"override_angular_damping":true,
+		"new_angular_damping":0.0
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",

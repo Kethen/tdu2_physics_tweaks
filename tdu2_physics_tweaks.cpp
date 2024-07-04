@@ -46,7 +46,7 @@ int read_data_from_fd(int fd, char *buffer, int len){
 	return bytes_read;
 }
 
-int write_data_to_fd(int fd, char *buffer, int len){
+int write_data_to_fd(int fd, const char *buffer, int len){
 	int bytes_written = 0;
 	while(bytes_written < len){
 		int bytes_written_this_cycle = write(fd, &buffer[bytes_written], len - bytes_written);
@@ -94,6 +94,10 @@ struct overrides{
 	bool abs_off;
 	bool tcs_off;
 	bool hand_brake_abs_off;
+
+	// override angular damping values in Physics.cpr
+	bool override_angular_damping;
+	float new_angular_damping;
 };
 
 struct multipliers{
@@ -133,14 +137,24 @@ struct config current_config = {0};
 pthread_mutex_t current_config_mutex;
 
 void log_config(struct config *c){
+	#define PRINT_SETTING_BOOL(key) {\
+		LOG("setting " STR(key) ": %s\n", c->key? "true" : "false");\
+	}
+	PRINT_SETTING_BOOL(only_modify_player_vehicle);
+
 	#define PRINT_OVERRIDE_FLOAT(key) {\
 		LOG("override " STR(key) ": %f\n", c->o.key);\
+	}
+	#define PRINT_OVERRIDE_BOOL(key) {\
+		LOG("override " STR(key) ": %s\n", c->o.key? "true": "false");\
 	}
 	PRINT_OVERRIDE_FLOAT(gravity);
 	PRINT_OVERRIDE_FLOAT(min_extra_gravity);
 	PRINT_OVERRIDE_FLOAT(max_extra_gravity);
 	PRINT_OVERRIDE_FLOAT(extra_gravity_accel_duration);
 	PRINT_OVERRIDE_FLOAT(extra_gravity_accel_delay);
+	PRINT_OVERRIDE_BOOL(override_angular_damping);
+	PRINT_OVERRIDE_FLOAT(new_angular_damping);
 
 	#define PRINT_MULTIPLIER_FLOAT(key) {\
 		LOG("multiplier " STR(key) ": %f\n", c->m.key);\
@@ -163,105 +177,130 @@ void log_config(struct config *c){
 	PRINT_MULTIPLIER_FLOAT(lateral_grip_rear);
 	PRINT_MULTIPLIER_FLOAT(grip_front);
 	PRINT_MULTIPLIER_FLOAT(grip_rear);
+	PRINT_MULTIPLIER_FLOAT(brake_power);
 	#undef PRINT_OVERRIDE_FLOAT
+	#undef PRINT_MULTIPLIER_FLOAT
+	#undef PRINT_SETTING_BOOL
 }
 
 void parse_config(){
-	int config_fd = open("./tdu2_physics_tweaks_config.json", O_BINARY | O_RDONLY);
+	const char *config_path = "./tdu2_physics_tweaks_config.json";
+	bool updated = false;
+	json parsed_config;
+
+	int config_fd = open(config_path, O_BINARY | O_RDONLY);
 	if(config_fd < 0){
-		LOG("failed opening tdu2_physics_tweaks_config.json for reading, ending process :(\n");
-		exit(1);
+		LOG("warning, failed opening %s for reading, using defaults\n", config_path);
 	}
 
-	int file_size = lseek(config_fd, 0, SEEK_END);
-	if(file_size < 0){
-		LOG("failed fetching config file size, ending process :(\n");
-		exit(1);
-	}
+	while(config_fd >= 0){
+		int file_size = lseek(config_fd, 0, SEEK_END);
+		if(file_size < 0){
+			LOG("failed fetching config file size, using defaults\n");
+			break;
+		}
 
-	int seek_result = lseek(config_fd, 0, SEEK_SET);
-	if(seek_result < 0){
-		LOG("failed rewinding config file, ending process :(\n");
-		exit(1);
-	}
+		int seek_result = lseek(config_fd, 0, SEEK_SET);
+		if(seek_result < 0){
+			LOG("failed rewinding config file, using defaults\n");
+			break;
+		}
 
-	char *buffer = (char *)malloc(file_size);
-	if(buffer == NULL){
-		LOG("failed allocating buffer for reading the config file, ending process :(\n");
-		exit(1);
-	}
+		char *buffer = (char *)malloc(file_size);
+		if(buffer == NULL){
+			LOG("failed allocating buffer for reading the config file, using defaults\n");
+			free(buffer);
+			break;
+		}
 
-	int bytes_read = read_data_from_fd(config_fd, buffer, file_size);
-	if(bytes_read < 0){
-		LOG("failed reading tdu2_physics_tweaks_config.json, ending process :(\n");
-		exit(1);
+		int bytes_read = read_data_from_fd(config_fd, buffer, file_size);
+		if(bytes_read < 0){
+			LOG("failed reading tdu2_physics_tweaks_config.json, using defaults\n");
+			free(buffer);
+			break;
+		}
+
+		try{
+			parsed_config = json::parse(std::string(buffer, bytes_read));
+		}catch(...){
+			LOG("failed parsing tdu2_physics_tweaks_config.json, using defaults\n");
+			parsed_config = {};
+			free(buffer);
+			break;
+		}
+		free(buffer);
+		break;
+	}
+	if(config_fd >= 0){
+		close(config_fd);
 	}
 
 	struct config incoming_config = {0};
-	json parsed_config;
-	try{
-		parsed_config = json::parse(std::string(buffer, bytes_read));
-	}catch(...){
-		LOG("failed parsing tdu2_physics_tweaks_config.json, ending process :(\n");
-		exit(1); \
-	}
 
-	#define FETCH_BOOL(key) { \
+	#define FETCH_SETTING(key, d) { \
 		try{ \
 			incoming_config.key = parsed_config.at(STR(key)); \
 		}catch(...){ \
-			LOG("failed fetching config " STR(key) " from json, ending process :(\n") \
-			exit(1); \
+			LOG("warning: failed fetching config " STR(key) " from json, adding default") \
+			updated = true; \
+			incoming_config.key = d; \
+			parsed_config[STR(key)] = d; \
 		} \
 	}
-	FETCH_BOOL(only_modify_player_vehicle);
-	#undef FETCH_BOOL
+	FETCH_SETTING(only_modify_player_vehicle, true);
+	#undef FETCH_SETTING
 
-	#define FETCH_OVERRIDE(key) { \
+	#define FETCH_OVERRIDE(key, d) { \
 		try{ \
 			incoming_config.o.key = parsed_config.at("overrides").at(STR(key)); \
 		}catch(...){ \
-			LOG("failed fetching override " STR(key) " from json, ending process :(\n"); \
-			exit(1); \
+			LOG("warning: failed fetching override " STR(key) " from json, adding default\n"); \
+			updated = true; \
+			incoming_config.o.key = d; \
+			parsed_config["overrides"][STR(key)] = d; \
 		} \
 	}
-	FETCH_OVERRIDE(gravity);
-	FETCH_OVERRIDE(min_extra_gravity);
-	FETCH_OVERRIDE(max_extra_gravity);
-	FETCH_OVERRIDE(extra_gravity_accel_duration);
-	FETCH_OVERRIDE(extra_gravity_accel_delay);
-	FETCH_OVERRIDE(abs_off);
-	FETCH_OVERRIDE(tcs_off);
-	FETCH_OVERRIDE(hand_brake_abs_off);
+	FETCH_OVERRIDE(gravity, -9.81);
+	FETCH_OVERRIDE(min_extra_gravity, 0.1);
+	FETCH_OVERRIDE(max_extra_gravity, 1.0);
+	FETCH_OVERRIDE(extra_gravity_accel_duration, 0.1);
+	FETCH_OVERRIDE(extra_gravity_accel_delay, 0.1);
+	FETCH_OVERRIDE(abs_off, false);
+	FETCH_OVERRIDE(tcs_off, false);
+	FETCH_OVERRIDE(hand_brake_abs_off, false);
+	FETCH_OVERRIDE(override_angular_damping, false);
+	FETCH_OVERRIDE(new_angular_damping, 0.0);
 	#undef FETCH_OVERRIDE
 
-	#define FETCH_MULTIPLIER(key) { \
+	#define FETCH_MULTIPLIER(key, d) { \
 		try{ \
 			incoming_config.m.key = parsed_config.at("multipliers").at(STR(key)); \
 		}catch(...){ \
-			LOG("failed fetching multiplier " STR(key) " from json, ending process :(\n"); \
-			exit(1); \
+			LOG("failed fetching multiplier " STR(key) " from json, adding default\n"); \
+			updated = true; \
+			incoming_config.m.key = d; \
+			parsed_config["multipliers"][STR(key)] = d; \
 		} \
 	}
-	FETCH_MULTIPLIER(suspension_length_front);
-	FETCH_MULTIPLIER(suspension_length_rear);
-	FETCH_MULTIPLIER(dampers_front);
-	FETCH_MULTIPLIER(dampers_rear);
-	FETCH_MULTIPLIER(ride_height_front);
-	FETCH_MULTIPLIER(ride_height_rear);
-	FETCH_MULTIPLIER(anti_roll_bar_front);
-	FETCH_MULTIPLIER(anti_roll_bar_rear);
-	FETCH_MULTIPLIER(anti_roll_bar_damping_front);
-	FETCH_MULTIPLIER(anti_roll_bar_damping_rear);
-	FETCH_MULTIPLIER(lift_drag_ratio);
-	FETCH_MULTIPLIER(down_force_velocity);
-	FETCH_MULTIPLIER(down_force_front);
-	FETCH_MULTIPLIER(down_force_rear);
-	FETCH_MULTIPLIER(lateral_grip_front);
-	FETCH_MULTIPLIER(lateral_grip_rear);
-	FETCH_MULTIPLIER(grip_front);
-	FETCH_MULTIPLIER(grip_rear);
-	FETCH_MULTIPLIER(brake_power);
+	FETCH_MULTIPLIER(suspension_length_front, 1.0);
+	FETCH_MULTIPLIER(suspension_length_rear, 1.0);
+	FETCH_MULTIPLIER(dampers_front, 1.0);
+	FETCH_MULTIPLIER(dampers_rear, 1.0);
+	FETCH_MULTIPLIER(ride_height_front, 1.0);
+	FETCH_MULTIPLIER(ride_height_rear, 1.0);
+	FETCH_MULTIPLIER(anti_roll_bar_front, 1.0);
+	FETCH_MULTIPLIER(anti_roll_bar_rear, 1.0);
+	FETCH_MULTIPLIER(anti_roll_bar_damping_front, 1.0);
+	FETCH_MULTIPLIER(anti_roll_bar_damping_rear, 1.0);
+	FETCH_MULTIPLIER(lift_drag_ratio, 1.0);
+	FETCH_MULTIPLIER(down_force_velocity, 1.0);
+	FETCH_MULTIPLIER(down_force_front, 1.0);
+	FETCH_MULTIPLIER(down_force_rear, 1.0);
+	FETCH_MULTIPLIER(lateral_grip_front, 1.0);
+	FETCH_MULTIPLIER(lateral_grip_rear, 1.0);
+	FETCH_MULTIPLIER(grip_front, 1.0);
+	FETCH_MULTIPLIER(grip_rear, 1.0);
+	FETCH_MULTIPLIER(brake_power, 1.0);
 	#undef FETCH_MULTIPLIER
 
 	if(memcmp(&current_config, &incoming_config, sizeof(struct config)) != 0){
@@ -271,7 +310,21 @@ void parse_config(){
 		log_config(&current_config);
 	}
 
-	free(buffer);
+	if(!updated){
+		return;
+	}
+	config_fd = open(config_path, O_BINARY | O_WRONLY | O_TRUNC | O_CREAT);
+
+	if(config_fd < 0){
+		LOG("warning: failed opening %s for updating, please make sure the file is not readonly\n", config_path);
+		return;
+	}
+
+	std::string out_json = parsed_config.dump(4);
+	int write_result = write_data_to_fd(config_fd, out_json.c_str(), out_json.size());
+	if(write_result != out_json.size()){
+		LOG("warning: failed writing updated config to %s\n", config_path);
+	}
 	close(config_fd);
 }
 
@@ -440,6 +493,18 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	float *source_hand_brake_slip_ratio_sport = (float *)(unknown_4 + 0x358);
 	float *source_hand_brake_slip_ratio_hypersport = (float *)(unknown_4 + 0x35c);
 
+	float *angular_damping_off_array = (float *)(unknown_4 + 0x1ec);
+	float *angular_damping_secure_array = (float *)(unknown_4 + 0x1ec + 10 * 4);
+	float *angular_damping_sport_array = (float *)(unknown_4 + 0x1ec + 10 * 4 * 2);
+	float *angular_damping_hypersport_array = (float *)(unknown_4 + 0x1ec + 10 * 4 * 3);
+
+	static float bak_angular_damping[10 * 4];
+	static bool angular_damping_backed_up = false;
+	if(!angular_damping_backed_up){
+		memcpy(bak_angular_damping, angular_damping_off_array, sizeof(bak_angular_damping));
+		angular_damping_backed_up = true;
+	}
+
 	#define BACKUP_FLOAT(name) \
 		float bak_##name = *source_##name;
 
@@ -543,6 +608,16 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		*source_hand_brake_slip_ratio_hypersport = -0.6;
 	}
 
+	if(current_config.o.override_angular_damping){
+		for(int i = 0;i < 4; i++){
+			for(int j = 1;j < 10; j+=2){
+				angular_damping_off_array[i * 10 + j] = current_config.o.new_angular_damping;
+			}
+		}
+	}else{
+		memcpy(angular_damping_off_array, bak_angular_damping, sizeof(bak_angular_damping));
+	}
+
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
 	LOG("source lift drag ratio %f\n", *source_lift_drag_ratio);
@@ -586,6 +661,13 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("source Physics.cpr hand brake slip ratio sport %f\n", *source_hand_brake_slip_ratio_sport);
 	LOG_VERBOSE("source Physics.cpr hand brake slip ratio hypersport %f\n", *source_hand_brake_slip_ratio_hypersport);
 
+	LOG("source angular damping table\n");
+	for(int i = 0;i < 4; i++){
+		for(int j = 0;j < 10; j++){
+			LOG("%f ", angular_damping_off_array[i * 10 + j]);
+		}
+		LOG("\n");
+	}
 
 	#define RESTORE_VALUE(name) \
 		*source_##name = bak_##name;
