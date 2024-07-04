@@ -444,7 +444,9 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
 
-	if(__builtin_return_address(4) != (void *)0x00a943b7 && __builtin_return_address(4) != (void *)0x009d5ade && current_config.only_modify_player_vehicle){
+	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade;
+
+	if(!is_player && current_config.only_modify_player_vehicle){
 		f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 		return;
 	}
@@ -569,7 +571,7 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	*source_brake_power = *source_brake_power * current_config.m.brake_power;
 	pthread_mutex_unlock(&current_config_mutex);
 
-	if(current_config.o.abs_off){
+	if(current_config.o.abs_off && is_player){
 		*source_abs_min_velocity = 0;
 		*source_abs_max_velocity = 0;
 
@@ -583,7 +585,7 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		*source_abs_slip_ratio_hypersport = -0.2;
 	}
 
-	if(current_config.o.tcs_off){
+	if(current_config.o.tcs_off && is_player){
 		*source_tcs_min_velocity = 0;
 		*source_tcs_max_velocity = 0;
 
@@ -597,7 +599,7 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		*source_tcs_slip_ratio_hypersport = -9999.0;
 	}
 
-	if(current_config.o.hand_brake_abs_off){
+	if(current_config.o.hand_brake_abs_off && is_player){
 		*source_hand_brake_min_velocity = 0;
 		*source_hand_brake_max_velocity = 0;
 
