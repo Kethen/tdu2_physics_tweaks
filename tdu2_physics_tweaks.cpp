@@ -75,7 +75,7 @@ int write_data_to_fd(int fd, char *buffer, int len){
 #endif
 
 struct global_store{
-	float brake_pedal_value;
+	float brake_pedal_level;
 };
 
 struct global_store global = {0};
@@ -308,6 +308,22 @@ void __attribute__((fastcall)) f0086ad90_patched(uint32_t unknown_1){
 }
 */
 
+float calculate_new_slip_ratio(float brake_pedal_level){
+	// the current observation is pretty cursed
+	// the slip ratio that affects turning is almost constant to the value given by db here, no matter what brake input is given with different brake power values
+	// scale slip ratio here against brake pedal level to simulate lock up
+
+	// make it gran turismo 6-ish, only full locks at like 80%
+	// 0 to -0.2 from 0% to 75%
+	// -0.2 to -0.7 from 75% to 100%
+
+	// sadly weight transfer in tdu2 doesn't really increase front grip in a noticible way
+
+	float lower = brake_pedal_level >= 0.75? 1.0: brake_pedal_level / 0.75;
+	float upper = brake_pedal_level > 0.75? (brake_pedal_level - 0.75) / 0.25: 0;
+	return lower * (-0.2) + upper * (-0.5);
+}
+
 void *f00bacd50_ref = (void *)0x00bacd50;
 void (__attribute__((stdcall)) *f00bacd50_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3);
 void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3){
@@ -320,11 +336,13 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 	float *slip_ratio_sport = (float *)(unknown_1 + 0x64);
 	float *brake_pedal_level = (float *)(unknown_3 + 0x4);
 
-	// flagged from 00baddd0 hook
+	// flagged as player from 00baddd0 hook
 	if(900000 > *slip_ratio_hypersport){
 		f00bacd50_orig(unknown_1, unknown_2, unknown_3);
 		return;
 	}
+
+	global.brake_pedal_level = *brake_pedal_level;
 
 	#define BACKUP_FLOAT(key) \
 		float bak_##key = *key;
@@ -335,19 +353,17 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 	BACKUP_FLOAT(brake_pedal_level);
 	#undef BACKUP_FLOAT
 
-	// the current observation is pretty cursed
-	// the slip ratio that affects turning is almost constant to the value given by db here, no matter what brake input is given with different brake power values
-	// scale slip ratio here against brake pedal level to simulate lock up
-
-	// make it gran turismo 6-ish, only full locks at like 80%
-	// 0 to -0.2 from 0% to 75%
-	// -0.2 to -0.7 from 75% to 100%
+	// moved to 0087ebf0 hook, which is called later by the original function
+	/*
 	float lower = *brake_pedal_level >= 0.75? 1.0: *brake_pedal_level / 0.75;
 	float upper = *brake_pedal_level > 0.75? (*brake_pedal_level - 0.75) / 0.25: 0;
-	float new_slip_ratio = lower * (-0.2) + upper * (-0.5);
+	float new_slip_ratio = calculate_new_slip_ratio(*brake_pedal_level);
 
 	*slip_ratio_hypersport = new_slip_ratio;
 	*slip_ratio_off = new_slip_ratio;
+	*slip_ratio_secure = new_slip_ratio;
+	*slip_ratio_sport = new_slip_ratio;
+	*/
 
 	LOG_VERBOSE("slip ratio hypersport %f\n", *slip_ratio_hypersport);
 	LOG_VERBOSE("slip ratio off %f\n", *slip_ratio_off);
@@ -788,7 +804,11 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 void *f0087ebf0_ref = (void *)0x0087ebf0;
 void (__attribute__((fastcall)) *f0087ebf0_orig)(uint32_t context);
 void __attribute__((fastcall)) f0087ebf0_patched(uint32_t context){
-	static bool logged = false;
+	// this function gets called by the hooked 00bacd50
+
+	LOG_VERBOSE("changing extra gravity and slip ratio, context 0x%08x\n", context);
+	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4), __builtin_return_address(5));
+
 	float *min_extra_gravity = (float *)(context + 5 * 4);
 	float *max_extra_gravity = (float *)(context + 6 * 4);
 	float *extra_gravity_accel_duration = (float *)(context + 7 * 4);
@@ -801,11 +821,16 @@ void __attribute__((fastcall)) f0087ebf0_patched(uint32_t context){
 	*extra_gravity_accel_delay = current_config.o.extra_gravity_accel_delay;
 	pthread_mutex_unlock(&current_config_mutex);
 
-	if(!logged){
-		LOG_VERBOSE("extra gravity min %f, max %f, duration %f, delay %f\n", *min_extra_gravity, *max_extra_gravity, *extra_gravity_accel_duration, *extra_gravity_accel_delay);
-		logged = true;
-	}
+	LOG_VERBOSE("extra gravity min %f, max %f, duration %f, delay %f\n", *min_extra_gravity, *max_extra_gravity, *extra_gravity_accel_duration, *extra_gravity_accel_delay);
+
+	float *slip_ratio = (float *)(context - 0x154);
 	f0087ebf0_orig(context);
+	float slip_ratio_orig = *slip_ratio;
+	// flagged for slip ratio modification
+	if(900000 < *slip_ratio){
+		*slip_ratio = calculate_new_slip_ratio(global.brake_pedal_level);
+		LOG_VERBOSE("overriding slip ratio from %f to %f\n", slip_ratio_orig, *slip_ratio);
+	}
 }
 
 int hook_functions(){
