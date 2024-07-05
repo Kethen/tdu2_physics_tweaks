@@ -17,6 +17,7 @@ The following example adjusts vanilla cars to feel somewhere between tdu2 and td
 ```
 {
 	"only_modify_player_vehicle":true,
+	"allow_road_cars_on_dirt": true,
 	"overrides":{
 		"d1":"changes gravity constant, applies once on game start",
 		"gravity":-9.81,

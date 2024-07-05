@@ -131,6 +131,7 @@ struct config{
 	struct overrides o;
 	struct multipliers m;
 	bool only_modify_player_vehicle;
+	bool allow_road_cars_on_dirt;
 };
 
 struct config current_config = {0};
@@ -141,6 +142,7 @@ void log_config(struct config *c){
 		LOG("setting " STR(key) ": %s\n", c->key? "true" : "false");\
 	}
 	PRINT_SETTING_BOOL(only_modify_player_vehicle);
+	PRINT_SETTING_BOOL(allow_road_cars_on_dirt);
 
 	#define PRINT_OVERRIDE_FLOAT(key) {\
 		LOG("override " STR(key) ": %f\n", c->o.key);\
@@ -248,6 +250,7 @@ void parse_config(){
 		} \
 	}
 	FETCH_SETTING(only_modify_player_vehicle, true);
+	FETCH_SETTING(allow_road_cars_on_dirt, false);
 	#undef FETCH_SETTING
 
 	#define FETCH_OVERRIDE(key, d) { \
@@ -500,11 +503,23 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	float *angular_damping_sport_array = (float *)(unknown_4 + 0x1ec + 10 * 4 * 2);
 	float *angular_damping_hypersport_array = (float *)(unknown_4 + 0x1ec + 10 * 4 * 3);
 
+	float *offroad_dirt_damping_array = (float *)(unknown_4 + 0x28c);
+	float *offroad_grass_damping_array = (float *)(unknown_4 + 0x28c + 10 * 4);
+	float *road_dirt_damping_array = (float *)(unknown_4 + 0x28c + 10 * 4 * 2);
+	float *road_grass_damping_array = (float *)(unknown_4 + 0x28c + 10 * 4 * 3);
+
 	static float bak_angular_damping[10 * 4];
 	static bool angular_damping_backed_up = false;
 	if(!angular_damping_backed_up){
 		memcpy(bak_angular_damping, angular_damping_off_array, sizeof(bak_angular_damping));
 		angular_damping_backed_up = true;
+	}
+
+	static float bak_dirt_damping[10 * 4];
+	static bool dirt_damping_backed_up = false;
+	if(!dirt_damping_backed_up){
+		memcpy(bak_dirt_damping, offroad_dirt_damping_array, sizeof(bak_dirt_damping));
+		dirt_damping_backed_up = true;
 	}
 
 	#define BACKUP_FLOAT(name) \
@@ -620,6 +635,12 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		memcpy(angular_damping_off_array, bak_angular_damping, sizeof(bak_angular_damping));
 	}
 
+	if(current_config.allow_road_cars_on_dirt){
+		memcpy(offroad_dirt_damping_array + 20, offroad_dirt_damping_array, sizeof(float) * 20);
+	}else{
+		memcpy(offroad_dirt_damping_array, bak_dirt_damping, sizeof(bak_dirt_damping));
+	}
+
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
 	LOG("source lift drag ratio %f\n", *source_lift_drag_ratio);
@@ -667,6 +688,14 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	for(int i = 0;i < 4; i++){
 		for(int j = 0;j < 10; j++){
 			LOG("%f ", angular_damping_off_array[i * 10 + j]);
+		}
+		LOG("\n");
+	}
+
+	LOG("source dirt damping table\n");
+	for(int i = 0;i < 4; i++){
+		for(int j = 0;j < 10; j++){
+			LOG("%f ", offroad_dirt_damping_array[i * 10 + j]);
 		}
 		LOG("\n");
 	}
