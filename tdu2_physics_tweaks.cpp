@@ -243,7 +243,7 @@ void parse_config(){
 		try{ \
 			incoming_config.key = parsed_config.at(STR(key)); \
 		}catch(...){ \
-			LOG("warning: failed fetching config " STR(key) " from json, adding default") \
+			LOG("warning: failed fetching config " STR(key) " from json, adding default\n") \
 			updated = true; \
 			incoming_config.key = d; \
 			parsed_config[STR(key)] = d; \
