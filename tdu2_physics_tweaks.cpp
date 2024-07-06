@@ -646,6 +646,11 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	float *steering_velocity_array = (float *)(unknown_4 + 0x374);
 	float *steering_max_angle_array = (float *)(unknown_4 + 0x374 + 10 * 4);
 
+	// loaded but does absolutely nothing?
+	float *ffb_friction_effect_array_basic = (float *)(unknown_4 + 0x3ec);
+	float *ffb_friction_effect_array_power = (float *)(unknown_4 + 0x3f8);
+	float *ffb_spring_effect_array = (float *)(unknown_4 + 0x404);
+
 	static float bak_angular_damping[10 * 4];
 	static bool angular_damping_backed_up = false;
 	if(!angular_damping_backed_up){
@@ -861,6 +866,14 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 			LOG("%f ", steering_velocity_array[i * 10 + j]);
 		}
 		LOG("\n");
+	}
+
+	LOG_VERBOSE("source ffb table\n");
+	for(int i = 0;i < 3; i++){
+		for(int j = 0;j < 3; j++){
+			LOG_VERBOSE("%f ", ffb_friction_effect_array_basic[i * 3 + j]);
+		}
+		LOG_VERBOSE("\n");
 	}
 
 	#define RESTORE_VALUE(name) \
