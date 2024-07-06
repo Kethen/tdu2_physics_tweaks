@@ -98,6 +98,11 @@ struct overrides{
 	// override angular damping values in Physics.cpr
 	bool override_angular_damping;
 	float new_angular_damping;
+
+	// steering wheel mode, override values in Physics.cpr
+	bool steering_wheel_mode;
+	float steering_velocity;
+	float steering_max_angle;
 };
 
 struct multipliers{
@@ -157,6 +162,9 @@ void log_config(struct config *c){
 	PRINT_OVERRIDE_FLOAT(extra_gravity_accel_delay);
 	PRINT_OVERRIDE_BOOL(override_angular_damping);
 	PRINT_OVERRIDE_FLOAT(new_angular_damping);
+	PRINT_OVERRIDE_BOOL(steering_wheel_mode);
+	PRINT_OVERRIDE_FLOAT(steering_velocity);
+	PRINT_OVERRIDE_FLOAT(steering_max_angle);
 
 	#define PRINT_MULTIPLIER_FLOAT(key) {\
 		LOG("multiplier " STR(key) ": %f\n", c->m.key);\
@@ -273,6 +281,9 @@ void parse_config(){
 	FETCH_OVERRIDE(hand_brake_abs_off, false);
 	FETCH_OVERRIDE(override_angular_damping, false);
 	FETCH_OVERRIDE(new_angular_damping, 0.0);
+	FETCH_OVERRIDE(steering_wheel_mode, false);
+	FETCH_OVERRIDE(steering_velocity, 900.0);
+	FETCH_OVERRIDE(steering_max_angle, 40.0);
 	#undef FETCH_OVERRIDE
 
 	#define FETCH_MULTIPLIER(key, d) { \
@@ -508,6 +519,9 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	float *road_dirt_damping_array = (float *)(unknown_4 + 0x28c + 10 * 4 * 2);
 	float *road_grass_damping_array = (float *)(unknown_4 + 0x28c + 10 * 4 * 3);
 
+	float *steering_velocity_array = (float *)(unknown_4 + 0x374);
+	float *steering_max_angle_array = (float *)(unknown_4 + 0x374 + 10 * 4);
+
 	static float bak_angular_damping[10 * 4];
 	static bool angular_damping_backed_up = false;
 	if(!angular_damping_backed_up){
@@ -520,6 +534,13 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	if(!dirt_damping_backed_up){
 		memcpy(bak_dirt_damping, offroad_dirt_damping_array, sizeof(bak_dirt_damping));
 		dirt_damping_backed_up = true;
+	}
+
+	static float bak_steering[10 * 2];
+	static bool steering_backed_up = false;
+	if(!steering_backed_up){
+		memcpy(bak_steering, steering_velocity_array, sizeof(bak_steering));
+		steering_backed_up = true;
 	}
 
 	#define BACKUP_FLOAT(name) \
@@ -641,6 +662,15 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 		memcpy(offroad_dirt_damping_array, bak_dirt_damping, sizeof(bak_dirt_damping));
 	}
 
+	if(current_config.o.steering_wheel_mode && is_player){
+		for(int i = 1;i < 10; i+=2){
+			steering_velocity_array[i] = current_config.o.steering_velocity;
+			steering_max_angle_array[i] = current_config.o.steering_max_angle;
+		}
+	}else{
+		memcpy(steering_velocity_array, bak_steering, sizeof(bak_steering));
+	}
+
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
 	LOG("source lift drag ratio %f\n", *source_lift_drag_ratio);
@@ -696,6 +726,14 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	for(int i = 0;i < 4; i++){
 		for(int j = 0;j < 10; j++){
 			LOG("%f ", offroad_dirt_damping_array[i * 10 + j]);
+		}
+		LOG("\n");
+	}
+
+	LOG("source steering table\n");
+	for(int i = 0;i < 2; i++){
+		for(int j = 0;j < 10; j++){
+			LOG("%f ", steering_velocity_array[i * 10 + j]);
 		}
 		LOG("\n");
 	}

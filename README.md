@@ -35,7 +35,12 @@ The following example adjusts vanilla cars to feel somewhere between tdu2 and td
 
 		"d4":"override angular damping values in Physics.cpr, higher values means more resistance to rotations (both turning and rolling), applies on car spawn/change",
 		"override_angular_damping":true,
-		"new_angular_damping":0.0
+		"new_angular_damping":0.0,
+
+		"d5":"steering wheel mode like in tdu1, values overrides only applies when enabled, applies on car spawn/change",
+		"steering_wheel_mode":false,
+		"steering_velocity":900.0,
+		"steering_max_angle":40.0
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
