@@ -103,6 +103,18 @@ struct overrides{
 	bool steering_wheel_mode;
 	float steering_velocity;
 	float steering_max_angle;
+
+	// override analog settings
+	bool override_analog_settings;
+	float ffb_strength;
+	float ffb_vibration;
+	float steering_sensitivity;
+	float steering_speed_factor;
+	float steering_damping;
+	float steering_deadzone;
+	float clutch_linearity;
+	float throttle_linearity;
+	float brake_linearity;
 };
 
 struct multipliers{
@@ -165,6 +177,16 @@ void log_config(struct config *c){
 	PRINT_OVERRIDE_BOOL(steering_wheel_mode);
 	PRINT_OVERRIDE_FLOAT(steering_velocity);
 	PRINT_OVERRIDE_FLOAT(steering_max_angle);
+	PRINT_OVERRIDE_BOOL(override_analog_settings);
+	PRINT_OVERRIDE_FLOAT(ffb_strength);
+	PRINT_OVERRIDE_FLOAT(ffb_vibration);
+	PRINT_OVERRIDE_FLOAT(steering_sensitivity);
+	PRINT_OVERRIDE_FLOAT(steering_speed_factor);
+	PRINT_OVERRIDE_FLOAT(steering_damping);
+	PRINT_OVERRIDE_FLOAT(steering_deadzone);
+	PRINT_OVERRIDE_FLOAT(clutch_linearity);
+	PRINT_OVERRIDE_FLOAT(throttle_linearity);
+	PRINT_OVERRIDE_FLOAT(brake_linearity);
 
 	#define PRINT_MULTIPLIER_FLOAT(key) {\
 		LOG("multiplier " STR(key) ": %f\n", c->m.key);\
@@ -284,6 +306,16 @@ void parse_config(){
 	FETCH_OVERRIDE(steering_wheel_mode, false);
 	FETCH_OVERRIDE(steering_velocity, 900.0);
 	FETCH_OVERRIDE(steering_max_angle, 40.0);
+	FETCH_OVERRIDE(override_analog_settings, false);
+	FETCH_OVERRIDE(ffb_strength, 1.0);
+	FETCH_OVERRIDE(ffb_vibration, 0.5);
+	FETCH_OVERRIDE(steering_sensitivity, 0.25);
+	FETCH_OVERRIDE(steering_speed_factor, 0.0);
+	FETCH_OVERRIDE(steering_damping, 0.0);
+	FETCH_OVERRIDE(steering_deadzone, 0.0);
+	FETCH_OVERRIDE(clutch_linearity, 0.5);
+	FETCH_OVERRIDE(throttle_linearity, 0.5);
+	FETCH_OVERRIDE(brake_linearity, 0.5);
 	#undef FETCH_OVERRIDE
 
 	#define FETCH_MULTIPLIER(key, d) { \
@@ -340,6 +372,98 @@ void parse_config(){
 		LOG("warning: failed writing updated config to %s\n", config_path);
 	}
 	close(config_fd);
+}
+
+void *f00bcfbb0_ref = (void *)0x00bcfbb0;
+void (__attribute__((stdcall)) *f00bcfbb0_orig)(float);
+void __attribute__((stdcall)) f00bcfbb0_patched(float unknown_1){
+	LOG_VERBOSE("overriding analog settings, unknown_1 is %f\n", unknown_1);
+	f00bcfbb0_orig(unknown_1);
+
+	uint32_t start_addr = 0x010257e8;
+	if(*(uint32_t *)start_addr == 0){
+		//LOG("can't collect data with 00bcfbb0, 0x%08x is 0\n", start_addr);
+		return;
+	}
+
+	uint32_t ivar5 = *(uint32_t *)(*(uint32_t *)start_addr + 0x79bc);
+	if(ivar5 == 0){
+		//LOG("can't collect data with 00bcfbb0, ivar5 is 0\n");
+		return;
+	}
+	if(*(uint32_t *)(ivar5 +  0x7470) == 0){
+		//LOG("can't collect data with 00bcfbb0, value at ivar5 + 0x7470 is 0\n");
+		return;
+	}
+	uint32_t start_addr_2 = 0x00fe4ccc;
+	if(*(uint32_t *)start_addr_2 == 0){
+		//LOG("can't collect data with 00bcfbb0, value at 0x%08x is 0\n", start_addr_2);
+		return;
+	}
+	if(*(uint32_t *)start_addr_2 == 0){
+		//LOG("can't collect data with 00bcfbb0, value at 0x%08x is 0\n", start_addr_2);
+		return;
+	}
+
+	bool bvar6 = *(char *)(*(uint32_t *)start_addr_2 + 3) == 0;
+	if(bvar6){
+		//LOG("can't collect data with 00bcfbb0, bvar6 is true\n", start_addr_2);
+		return;
+	}
+
+	uint32_t pivar4 = *(uint32_t *)(*(uint32_t *)start_addr_2 + 0xc);
+	if(*(uint32_t *)pivar4 == 0){
+		//LOG("can't collect data with 00bcfbb0, value at pivar4 is 0\n", start_addr_2);
+		return;
+	}
+
+	pivar4 = *(uint32_t *)(*(uint32_t *)pivar4 + 0x18);
+	if(pivar4 == 0){
+		//LOG("can't collect data with 00bcfbb0, pivar4 is 0\n", start_addr_2);
+		return;
+	}
+
+	float *inspect = (float *)(*(uint32_t *)(ivar5 + 0x84) + 0x20);
+	/*
+	LOG("dumping values around 0x%08x...\n", inspect);
+	for(int i = 0;i < 10; i++){
+		LOG("+%d, value %f\n", i, inspect[i]);
+	}
+	for(int i = 1;i < 10; i++){
+		LOG("-%d, value %f\n", i, inspect[i * -1]);
+	}
+	*/
+
+	// aka friction? it really does not strengthen re-center
+	float *ffb_strength = &inspect[0];
+	float *ffb_vibration = &inspect[2];
+	float *steering_sensitivity = &inspect[-7];
+	float *steering_speed_factor = &inspect[-6];
+	float *steering_damping = &inspect[-5];
+	float *steering_deadzone = &inspect[-4];
+	float *clutch_linearity = &inspect[-1];
+	float *throttle_linearity = &inspect[-3];
+	float *brake_linearity = &inspect[-2];
+
+	// not grabbing mutex here, this here is called too often for that
+	#define REPLACE_AND_LOG_VALUE(name) \
+		if(current_config.o.override_analog_settings){ \
+			*name = current_config.o.name; \
+		} \
+		LOG_VERBOSE(STR(name) ": %f\n", *name);
+
+	REPLACE_AND_LOG_VALUE(ffb_strength);
+	REPLACE_AND_LOG_VALUE(ffb_vibration);
+	REPLACE_AND_LOG_VALUE(steering_sensitivity);
+	REPLACE_AND_LOG_VALUE(steering_speed_factor);
+	REPLACE_AND_LOG_VALUE(steering_damping);
+	REPLACE_AND_LOG_VALUE(steering_deadzone);
+	REPLACE_AND_LOG_VALUE(clutch_linearity);
+	REPLACE_AND_LOG_VALUE(throttle_linearity);
+	REPLACE_AND_LOG_VALUE(brake_linearity);
+	#undef REPLACE_AND_LOG_VALUE
+
+	return;
 }
 
 // unknown call convention, crashes
@@ -605,7 +729,6 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	*source_grip_rear *= current_config.m.grip_rear;
 
 	*source_brake_power = *source_brake_power * current_config.m.brake_power;
-	pthread_mutex_unlock(&current_config_mutex);
 
 	if(current_config.o.abs_off && is_player){
 		*source_abs_min_velocity = 0;
@@ -670,6 +793,8 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	}else{
 		memcpy(steering_velocity_array, bak_steering, sizeof(bak_steering));
 	}
+
+	pthread_mutex_unlock(&current_config_mutex);
 
 	f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 
@@ -992,6 +1117,17 @@ int hook_functions(){
 	ret = MH_Initialize();
 	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
 		LOG("Failed initializing MinHook, %d\n", ret);
+		return -1;
+	}
+
+	ret = MH_CreateHook(f00bcfbb0_ref, (LPVOID)&f00bcfbb0_patched, (LPVOID *)&f00bcfbb0_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x00bcfbb0, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f00bcfbb0_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x00bcfbb0, %d\n", ret);
 		return -1;
 	}
 

@@ -23,7 +23,19 @@
 		"d5":"steering wheel mode like in tdu1, values overrides only applies when enabled, applies on car spawn/change",
 		"steering_wheel_mode":false,
 		"steering_velocity":900.0,
-		"steering_max_angle":40.0
+		"steering_max_angle":40.0,
+
+		"d6":"analog settings (controller configuration), applies runtime",
+		"override_analog_settings":false,
+		"ffb_strength":1.0,
+		"ffb_vibration":0.5,
+		"steering_sensitivity":0.25,
+		"steering_speed_factor":0.0,
+		"steering_damping":0.0,
+		"steering_deadzone":0.0,
+		"clutch_linearity":0.5,
+		"throttle_linearity":0.5,
+		"brake_linearity":0.5
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
