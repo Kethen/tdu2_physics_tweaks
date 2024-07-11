@@ -10,9 +10,12 @@
 int (*hook_create_device_A)(LPDIRECTINPUT8A dinput8_interface_A) = NULL;
 int (*hook_create_device_W)(LPDIRECTINPUT8W dinput8_interface_W) = NULL;
 void (*log_effect)(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bool should_log) = NULL;
+void (*log_device_prop)(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_log) = NULL;
+
 void (*init_lib_logging)() = NULL;
 void (*set_set_param_cb)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags)) = NULL;
 void (*set_create_effect_cb)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)) = NULL;
+void (*set_set_device_property_cb)(void (__attribute__((stdcall)) *cb)(LPGUID prop_guid, LPDIPROPHEADER propheader)) = NULL;
 
 HMODULE (*get_dinput8_handle)() = NULL;
 
@@ -29,6 +32,11 @@ static void __attribute__((stdcall))create_effect_cb(LPGUID effect_guid, LPDIEFF
 	log_effect(effect_guid, params, &modified_items, false);
 }
 
+static void __attribute__((stdcall)) set_device_property_cb(LPGUID prop_guid, LPDIPROPHEADER propheader){
+	// TODO add settings
+	log_device_prop(prop_guid, propheader, false);
+}
+
 int init_dinput8_hook(){
 	const char *lib_path = "dinput8_ffb_tweaks_i686.dll";
 	HMODULE lib = LoadLibraryA(lib_path);
@@ -40,10 +48,12 @@ int init_dinput8_hook(){
 	hook_create_device_A = (int (*)(LPDIRECTINPUT8A))GetProcAddress(lib, "hook_create_device_A");
 	hook_create_device_W = (int (*)(LPDIRECTINPUT8W))GetProcAddress(lib, "hook_create_device_W");
 	log_effect = (void (*)(LPGUID, LPDIEFFECT, DWORD *, bool))GetProcAddress(lib, "log_effect");
+	log_device_prop = (void (*)(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_log))GetProcAddress(lib, "log_device_prop");
 	init_lib_logging = (void (*)())GetProcAddress(lib, "init_logging");
 	get_dinput8_handle = (HMODULE (*)())GetProcAddress(lib, "get_dinput8_handle");
 	set_set_param_cb = (void (*)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags)))GetProcAddress(lib, "set_set_param_cb");
 	set_create_effect_cb = (void (*)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)))GetProcAddress(lib, "set_create_effect_cb");
+	set_set_device_property_cb = (void (*)(void (__attribute__((stdcall)) *cb)(LPGUID prop_guid, LPDIPROPHEADER propheader)))GetProcAddress(lib, "set_set_device_property_cb");
 
 	#define CHECK_HOOK(name) { \
 		if(name == NULL){ \
@@ -58,6 +68,7 @@ int init_dinput8_hook(){
 	CHECK_HOOK(get_dinput8_handle);
 	CHECK_HOOK(set_set_param_cb);
 	CHECK_HOOK(set_create_effect_cb);
+	CHECK_HOOK(set_set_device_property_cb);
 	#undef CHECK_HOOK
 
 	init_lib_logging();
@@ -71,6 +82,7 @@ int init_dinput8_hook(){
 
 	set_set_param_cb(set_param_cb);
 	set_create_effect_cb(create_effect_cb);
+	set_set_device_property_cb(set_device_property_cb);
 
 	// make a dll soup to hook methods becausing hooking DirectInput8Create itself triggers hooking detection on tdu2's physics engine
 
