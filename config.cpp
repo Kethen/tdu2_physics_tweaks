@@ -207,7 +207,7 @@ void parse_config(){
 		try{ \
 			incoming_config.m.key = parsed_config.at("multipliers").at(STR(key)); \
 		}catch(...){ \
-			LOG("failed fetching multiplier " STR(key) " from json, adding default\n"); \
+			LOG("warning: failed fetching multiplier " STR(key) " from json, adding default\n"); \
 			updated = true; \
 			incoming_config.m.key = d; \
 			parsed_config["multipliers"][STR(key)] = d; \
@@ -238,7 +238,7 @@ void parse_config(){
 		try{ \
 			incoming_config.f.key = parsed_config.at("ffb_tweaks").at(STR(key)); \
 		}catch(...){ \
-			LOG("failed fetching multiplier " STR(key) " from json, adding default\n"); \
+			LOG("warning: failed fetching ffb tweak " STR(key) " from json, adding default\n"); \
 			updated = true; \
 			incoming_config.f.key = d; \
 			parsed_config["ffb_tweaks"][STR(key)] = d; \
