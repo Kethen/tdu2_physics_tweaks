@@ -27,6 +27,7 @@ static void log_config(struct config *c){
 	}
 	PRINT_SETTING_BOOL(only_modify_player_vehicle);
 	PRINT_SETTING_BOOL(allow_road_cars_on_dirt);
+	#undef PRINT_SETTING_BOOL
 
 	#define PRINT_OVERRIDE_FLOAT(key) {\
 		LOG("override " STR(key) ": %f\n", c->o.key);\
@@ -54,6 +55,8 @@ static void log_config(struct config *c){
 	PRINT_OVERRIDE_FLOAT(clutch_linearity);
 	PRINT_OVERRIDE_FLOAT(throttle_linearity);
 	PRINT_OVERRIDE_FLOAT(brake_linearity);
+	#undef PRINT_OVERRIDE_FLOAT
+	#undef PRINT_OVERRIDE_BOOL
 
 	#define PRINT_MULTIPLIER_FLOAT(key) {\
 		LOG("multiplier " STR(key) ": %f\n", c->m.key);\
@@ -77,9 +80,24 @@ static void log_config(struct config *c){
 	PRINT_MULTIPLIER_FLOAT(grip_front);
 	PRINT_MULTIPLIER_FLOAT(grip_rear);
 	PRINT_MULTIPLIER_FLOAT(brake_power);
-	#undef PRINT_OVERRIDE_FLOAT
 	#undef PRINT_MULTIPLIER_FLOAT
-	#undef PRINT_SETTING_BOOL
+
+	#define PRINT_FFB_TWEAK_BOOL(name){ \
+		LOG("ffb tweak %s: %s\n", STR(name), current_config.f.name? "true": "false"); \
+	}
+	#define PRINT_FFB_TWEAK_INT(name){ \
+		LOG("ffb tweak %s: %d\n", STR(name), current_config.f.name); \
+	}
+	PRINT_FFB_TWEAK_BOOL(enabled);
+	PRINT_FFB_TWEAK_BOOL(reduce_damper);
+	PRINT_FFB_TWEAK_BOOL(log_effects);
+	PRINT_FFB_TWEAK_INT(spring_effect_min);
+	PRINT_FFB_TWEAK_INT(spring_effect_max);
+	#undef PRINT_FFB_TWEAK_BOOL
+	#undef PRINT_FFB_TWEAK_INT
+
+	#define PRINT_FFB_TWEAK_
+
 }
 
 void parse_config(){
@@ -215,6 +233,23 @@ void parse_config(){
 	FETCH_MULTIPLIER(grip_rear, 1.0);
 	FETCH_MULTIPLIER(brake_power, 1.0);
 	#undef FETCH_MULTIPLIER
+
+	#define FETCH_FFB_TWEAK(key, d) { \
+		try{ \
+			incoming_config.f.key = parsed_config.at("ffb_tweaks").at(STR(key)); \
+		}catch(...){ \
+			LOG("failed fetching multiplier " STR(key) " from json, adding default\n"); \
+			updated = true; \
+			incoming_config.f.key = d; \
+			parsed_config["ffb_tweaks"][STR(key)] = d; \
+		} \
+	}
+	FETCH_FFB_TWEAK(enabled, false);
+	FETCH_FFB_TWEAK(reduce_damper, false);
+	FETCH_FFB_TWEAK(log_effects, false);
+	FETCH_FFB_TWEAK(spring_effect_min, 6500);
+	FETCH_FFB_TWEAK(spring_effect_max, 10000);
+	#undef FETCH_FFB_TWEAK
 
 	if(memcmp(&current_config, &incoming_config, sizeof(struct config)) != 0){
 		pthread_mutex_lock(&current_config_mutex);

@@ -22,8 +22,51 @@ HMODULE (*get_dinput8_handle)() = NULL;
 HRESULT (WINAPI *DirectInput8Create_fetched)(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);
 
 static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
-	// TODO add settings
-	log_effect(effect_guid, params, modified_items, false);
+	log_effect(effect_guid, params, modified_items, current_config.f.log_effects);
+
+	// not grabbing config mutex here, called too often
+	if(!current_config.f.enabled){
+		return;
+	}
+	if(*effect_guid == GUID_Spring && *modified_items & DIEP_TYPESPECIFICPARAMS && params->lpvTypeSpecificParams != NULL){
+		DICONDITION *condition = (DICONDITION *)params->lpvTypeSpecificParams;
+		// potential settings
+		int new_spring_effect_max = 10000;
+		int new_spring_effect_min = 6000;
+		// roughly 1000 - 9500, rescale it and spice it up
+		#define SCALE_VALUE(v){ \
+			int to_scale = (v); \
+			to_scale = to_scale - 1000; \
+			if(to_scale < 0){ \
+				(v) = 0; \
+			}else{ \
+				float level = to_scale / 8500.0; \
+				int diff = new_spring_effect_max - new_spring_effect_min; \
+				int lower_level = level > 0.1? new_spring_effect_min: (level / 0.1) * new_spring_effect_min; \
+				int upper_level = level > 0.1? (level - 0.1) * diff: 0; \
+				(v) = lower_level + upper_level; \
+			} \
+		}
+		SCALE_VALUE(condition->lPositiveCoefficient);
+		SCALE_VALUE(condition->lNegativeCoefficient);
+		SCALE_VALUE(condition->dwPositiveSaturation);
+		SCALE_VALUE(condition->dwNegativeSaturation);
+		#undef SCALE_VALUE
+
+		//condition->lPositiveCoefficient = 10000;
+		//condition->lNegativeCoefficient = 10000;
+
+		//condition->dwPositiveSaturation = 10000;
+		//condition->dwNegativeSaturation = 10000;
+	}
+
+	if(*effect_guid == GUID_Damper && *modified_items & DIEP_TYPESPECIFICPARAMS && params->lpvTypeSpecificParams != NULL && current_config.f.reduce_damper){
+		DICONDITION *condition = (DICONDITION *)params->lpvTypeSpecificParams;
+		condition->dwPositiveSaturation = condition->lPositiveCoefficient;
+		condition->dwNegativeSaturation = condition->lNegativeCoefficient;
+	}
+
+	log_effect(effect_guid, params, modified_items, current_config.f.log_effects);
 }
 
 static void __attribute__((stdcall))create_effect_cb(LPGUID effect_guid, LPDIEFFECT params){

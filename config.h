@@ -1,6 +1,14 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+struct ffb_tweaks{
+	bool enabled;
+	bool log_effects;
+	bool reduce_damper;
+	// 0-10000
+	int spring_effect_min;
+	int spring_effect_max;
+};
 
 struct overrides{
 	// sets on boot only, part of the physics engine seems obfuscated and rather annoying to hook run time
@@ -69,6 +77,7 @@ struct multipliers{
 struct config{
 	struct overrides o;
 	struct multipliers m;
+	struct ffb_tweaks f;
 	bool only_modify_player_vehicle;
 	bool allow_road_cars_on_dirt;
 };
