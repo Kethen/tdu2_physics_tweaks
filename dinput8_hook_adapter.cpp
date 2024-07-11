@@ -4,6 +4,7 @@
 
 #include "logging.h"
 #include "config.h"
+#include "common.h"
 
 #define STR(s) #s
 
@@ -33,6 +34,8 @@ static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT 
 		// potential settings
 		int new_spring_effect_max = 10000;
 		int new_spring_effect_min = 6000;
+		float current_slip_ratio = calculate_new_slip_ratio(global.brake_pedal_level);
+
 		// roughly 1000 - 9500, rescale it and spice it up
 		#define SCALE_VALUE(v){ \
 			int to_scale = (v); \
@@ -44,7 +47,12 @@ static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT 
 				int diff = new_spring_effect_max - new_spring_effect_min; \
 				int lower_level = level > 0.1? new_spring_effect_min: (level / 0.1) * new_spring_effect_min; \
 				int upper_level = level > 0.1? (level - 0.1) * diff: 0; \
-				(v) = lower_level + upper_level; \
+				int new_level = lower_level + upper_level; \
+				new_level = new_level * (1.0 + current_slip_ratio / 0.5); \
+				if(new_level < 0){ \
+					new_level = 0; \
+				} \
+				(v) = new_level; \
 			} \
 		}
 		SCALE_VALUE(condition->lPositiveCoefficient);
