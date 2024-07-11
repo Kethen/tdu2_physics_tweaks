@@ -216,7 +216,7 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
 
-	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade || __builtin_return_address(4) == (void *)0x00a10057;
+	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade || __builtin_return_address(4) == (void *)0x00a10057 || __builtin_return_address(4) == (void *)0x00a10356;
 
 	if(!is_player && current_config.only_modify_player_vehicle){
 		f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
@@ -663,7 +663,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	uint32_t ret = f00df3b30_orig(target, source, unknown);
 
-	if(__builtin_return_address(4) != (void *)0x00a943b7 && __builtin_return_address(4) != (void *)0x009d5ade && __builtin_return_address(4) != (void *)0x00a10057 && current_config.only_modify_player_vehicle){
+	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade || __builtin_return_address(4) == (void *)0x00a10057 || __builtin_return_address(4) == (void *)0x00a10356;
+
+	if(!is_player && current_config.only_modify_player_vehicle){
 		return ret;
 	}
 
