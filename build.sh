@@ -27,5 +27,6 @@ do
 
 	cp tdu2_physics_tweaks_config.json $OUT_DIR/
 	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/
+	cp dinput8_ffb_tweaks_prebuilt/dinput8_ffb_tweaks_i686.dll $OUT_DIR/
 done
 

@@ -35,5 +35,6 @@ jobs:
            dist/i686/MinHook.x86.dll
            dist/i686/tdu2_physics_tweaks_config.json
            dist/i686/tdu2_physics_tweaks_i686.asi
+           dist/i686/dinput8_ffb_tweaks_i686.dll
            README.md
         if-no-files-found: error
