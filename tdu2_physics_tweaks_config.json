@@ -5,7 +5,7 @@
 		"d1":"changes gravity constant, applies once on game start",
 		"gravity":-9.81,
 
-		"d2":"overrides extra gravity values in Physics.cpr, applies run time. set to 0 to remove extra downforce when airborne",
+		"d2":"overrides extra gravity values in Physics.cpr, applies on change. set to 0 to remove extra downforce when airborne",
 		"min_extra_gravity":0.1,
 		"max_extra_gravity":1.0,
 		"extra_gravity_accel_duration":0.1,
@@ -25,9 +25,11 @@
 		"steering_velocity":900.0,
 		"steering_max_angle":40.0,
 
-		"d6":"analog settings (controller configuration), applies runtime",
+		"d6":"analog settings (controller configuration), applies on change",
 		"override_analog_settings":false,
+		"d7":"strength of damper and spring effects, more than 1.0 will cause clipping",
 		"ffb_strength":1.0,
+		"d8":"strength of sine effects, happens during surface change, driving offroad, and redlining",
 		"ffb_vibration":0.5,
 		"steering_sensitivity":0.25,
 		"steering_speed_factor":0.0,
@@ -58,5 +60,16 @@
 		"grip_front":1.0,
 		"grip_rear":1.0,
 		"brake_power":1.0
+	},
+	"ffb_tweaks": {
+		"d1":"force feedback tweaks, applies on change",
+		"enabled": false,
+		"d2":"to log all effects sent to dinput8 or not",
+		"log_effects": false,
+		"d3":"reduce damper effect as the car go faster more than the game originally does, how it feels depends on how your wheel renders damper effect",
+		"reduce_damper": false,
+		"d4":"adjust spring effect begin and end force scaled on car speed, 0-10000, more than 10000 will cause clipping",
+		"spring_effect_max": 10000,
+		"spring_effect_min": 6500
 	}
 }
