@@ -23,7 +23,7 @@ HMODULE (*get_dinput8_handle)() = NULL;
 HRESULT (WINAPI *DirectInput8Create_fetched)(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);
 
 static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
-	log_effect(effect_guid, params, modified_items, current_config.f.log_effects);
+	//log_effect(effect_guid, params, modified_items, current_config.f.log_effects);
 
 	// not grabbing config mutex here, called too often
 	if(!current_config.f.enabled){

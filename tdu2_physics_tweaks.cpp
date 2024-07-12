@@ -113,6 +113,10 @@ void __attribute__((stdcall)) f00bcfbb0_patched(float unknown_1){
 	REPLACE_AND_LOG_VALUE(brake_linearity);
 	#undef REPLACE_AND_LOG_VALUE
 
+	if(current_config.f.enabled){
+		*ffb_strength = 1.0;
+	}
+
 	return;
 }
 
