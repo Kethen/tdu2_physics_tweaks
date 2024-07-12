@@ -8,12 +8,12 @@
 
 #define STR(s) #s
 
-int (*hook_create_device_A)(LPDIRECTINPUT8A dinput8_interface_A) = NULL;
-int (*hook_create_device_W)(LPDIRECTINPUT8W dinput8_interface_W) = NULL;
+int (*hook_create_device_methods)() = NULL;
+
+void (*init_lib_logging)() = NULL;
 void (*log_effect)(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bool should_log) = NULL;
 void (*log_device_prop)(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_log) = NULL;
 
-void (*init_lib_logging)() = NULL;
 void (*set_set_param_cb)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags)) = NULL;
 void (*set_create_effect_cb)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)) = NULL;
 void (*set_set_device_property_cb)(void (__attribute__((stdcall)) *cb)(LPGUID prop_guid, LPDIPROPHEADER propheader)) = NULL;
@@ -96,11 +96,10 @@ int init_dinput8_hook(){
 		return -1;
 	}
 
-	hook_create_device_A = (int (*)(LPDIRECTINPUT8A))GetProcAddress(lib, "hook_create_device_A");
-	hook_create_device_W = (int (*)(LPDIRECTINPUT8W))GetProcAddress(lib, "hook_create_device_W");
+	hook_create_device_methods = (int (*)())GetProcAddress(lib, "hook_create_device_methods");
+	init_lib_logging = (void (*)())GetProcAddress(lib, "init_logging");
 	log_effect = (void (*)(LPGUID, LPDIEFFECT, DWORD *, bool))GetProcAddress(lib, "log_effect");
 	log_device_prop = (void (*)(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_log))GetProcAddress(lib, "log_device_prop");
-	init_lib_logging = (void (*)())GetProcAddress(lib, "init_logging");
 	get_dinput8_handle = (HMODULE (*)())GetProcAddress(lib, "get_dinput8_handle");
 	set_set_param_cb = (void (*)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags)))GetProcAddress(lib, "set_set_param_cb");
 	set_create_effect_cb = (void (*)(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)))GetProcAddress(lib, "set_create_effect_cb");
@@ -112,10 +111,10 @@ int init_dinput8_hook(){
 			return -1; \
 		} \
 	}
-	CHECK_HOOK(hook_create_device_A);
-	CHECK_HOOK(hook_create_device_W);
-	CHECK_HOOK(log_effect);
+	CHECK_HOOK(hook_create_device_methods);
 	CHECK_HOOK(init_lib_logging);
+	CHECK_HOOK(log_effect);
+	CHECK_HOOK(log_device_prop);
 	CHECK_HOOK(get_dinput8_handle);
 	CHECK_HOOK(set_set_param_cb);
 	CHECK_HOOK(set_create_effect_cb);
@@ -124,39 +123,12 @@ int init_dinput8_hook(){
 
 	init_lib_logging();
 
-	HMODULE dinput8 = get_dinput8_handle();
-	if(dinput8 == NULL){
-		LOG("Failed fetching dinput8 handle, ffb tweaks disabled\n");
-		return -1;
-	}
-	DirectInput8Create_fetched = (HRESULT (WINAPI *)(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN))GetProcAddress(dinput8, "DirectInput8Create");
-
 	set_set_param_cb(set_param_cb);
 	set_create_effect_cb(create_effect_cb);
 	set_set_device_property_cb(set_device_property_cb);
 
-	// make a dll soup to hook methods becausing hooking DirectInput8Create itself triggers hooking detection on tdu2's physics engine
-
-	// this instance will be a memory leak? how the hek are you supposed to free these
-	LPDIRECTINPUT8A direct_input_8_interface_A;
-	HRESULT res = DirectInput8Create_fetched((HINSTANCE)init_dinput8_hook, 0x0800, IID_IDirectInput8A, (LPVOID *)&direct_input_8_interface_A, NULL);
-	if(res != DI_OK){
-		LOG("Failed creating dinput8 A interface, ffb tweaks disabled\n");
-		return -1;
-	}
-	if(hook_create_device_A(direct_input_8_interface_A) != 0){
-		LOG("Failed hooking dinput8 A interface, ffb tweaks disabled\n");
-		return -1;
-	}
-
-	LPDIRECTINPUT8W direct_input_8_interface_W;
-	res = DirectInput8Create_fetched((HINSTANCE)init_dinput8_hook, 0x0800, IID_IDirectInput8W, (LPVOID *)&direct_input_8_interface_W, NULL);
-	if(res != DI_OK){
-		LOG("Failed creating dinput8 W interface, ffb tweaks disabled\n");
-		return -1;
-	}
-	if(hook_create_device_W(direct_input_8_interface_W) != 0){
-		LOG("Failed hooking dinput8 W interface, ffb tweaks disabled\n");
+	if(hook_create_device_methods() != 0){
+		LOG("Failed dinput8 create device methods, ffb tweaks disabled\n");
 		return -1;
 	}
 
