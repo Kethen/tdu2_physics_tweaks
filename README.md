@@ -98,7 +98,9 @@ The following examples adjusts vanilla cars to feel somewhere between tdu2 and t
 
 Notable options are `override_analog_settings`, `steering_sensitivity`, `steering_deadzone`, `steering_wheel_mode`, `steering_max_angle` under the `overrides` section, as well as the `ffb_tweaks` section
 
-TDU2 sadly do not render wheel physics using constant force effect, but with spring and damper effects, basically asking the wheel to do it instead. you'd likely need to raise spring gain and adjust damper gain in your wheel's setting software to have better wheel feedback
+TDU2 sadly do not render wheel physics using constant force effect, but with spring and damper effects, basically asking the wheel to do it instead.
+
+You'd likely need to raise spring gain and adjust damper gain in your wheel's setting software to have better wheel feedback (eg. my g29 on linux, https://github.com/berarma/new-lg4ff driver along with https://github.com/berarma/oversteer gui allows adjusting overall, friction, damper and spring effect gains; Ghub on windows on the other hand seems to not expose any of those settings and Logitech Wheel Helper seems to have stopped working with the newest Ghub)
 
 Additionally when ffb tweaks are enabled, front wheel slipping feedback is simulated in a best effort manner
 
