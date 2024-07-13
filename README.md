@@ -211,9 +211,9 @@ If `tdu2_physics_tweaks_log.txt` or `dinput8_ffb_tweaks_log.txt` don't change / 
 
 ### Building
 
-On windows, install cygwin, along with mingw64-i686-gcc-g++ tool chain, then run `build.sh` at the project root in cygwin shell.
+On windows, install cygwin, along with `mingw64-i686-gcc-core` and `mingw64-i686-gcc-g++` toolchains, then run `build.sh` at the project root in cygwin shell.
 
-On linux, install podman from your package manager then run `build_podman.sh`.
+On linux, install `podman` from your package manager then run `build_podman.sh`.
 
 ### Credits
 
