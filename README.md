@@ -2,9 +2,21 @@
 
 Nudge tdu2 overall car handling to your own liking :D
 
-### Installation
+### Installation on Windows
 
 Place `dinput8.dll`, `MinHook.x86.dll`, `tdu2_physics_tweaks_config.json`, `dinput8_ffb_tweaks_i686.dll` and `tdu2_physics_tweaks_i686.asi` next to TestDrive2.exe.
+
+### Installation on Linux+WINE
+
+Copy the file next to TestDrive2.exe following the Windows instruction.
+
+After that you'd likely also have to declare a dll override before the asi loader as `dinput8.dll` will be picked up. It can be done in winecfg or with the below environment variable.
+
+```
+export WINEDLLOVERRIDES="dinput8=n,b"
+```
+
+Alternatively, if you are already using dxvk, chances are you have a `d3d9.dll` override ready to go. Simply install `dinput8.dll` as `d3d9.dll` instead.
 
 ### Usage
 
