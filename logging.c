@@ -12,7 +12,7 @@ void init_logging(){
 	pthread_mutex_init(&_log_mutex, NULL);
 	const char *log_path = "./tdu2_physics_tweaks_log.txt";
 	unlink(log_path);
-	_log_fd = open(log_path, O_WRONLY | O_CREAT | O_TRUNC);
+	_log_fd = open(log_path, O_WRONLY | O_CREAT | O_TRUNC, 00644);
 }
 
 int read_data_from_fd(int fd, char *buffer, int len){

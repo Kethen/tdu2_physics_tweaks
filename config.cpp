@@ -261,7 +261,7 @@ void parse_config(){
 	if(!updated){
 		return;
 	}
-	config_fd = open(config_path, O_BINARY | O_WRONLY | O_TRUNC | O_CREAT);
+	config_fd = open(config_path, O_BINARY | O_WRONLY | O_TRUNC | O_CREAT, 00644);
 
 	if(config_fd < 0){
 		LOG("warning: failed opening %s for updating, please make sure the file is not readonly\n", config_path);
