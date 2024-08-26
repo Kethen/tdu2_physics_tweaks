@@ -59,7 +59,9 @@
 		"lateral_grip_rear":1.0,
 		"grip_front":1.0,
 		"grip_rear":1.0,
-		"brake_power":1.0
+		"brake_power":1.0,
+		"suspension_rate_front":1.0,
+		"suspension_rate_rear":1.0
 	},
 	"ffb_tweaks": {
 		"d1":"force feedback tweaks, applies on change",

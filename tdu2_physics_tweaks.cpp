@@ -691,6 +691,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_anti_roll_bar_damping_front = (float *)(target + 0x7c);
 	float *converted_anti_roll_bar_damping_rear = (float *)(target + 0x80);
 
+	float *converted_suspension_rate_front = (float *)(target + 0x5c);
+	float *converted_suspension_rate_rear = (float *)(target + 0x60);
+
 	pthread_mutex_lock(&current_config_mutex);
 	*converted_suspension_length_front *= current_config.m.suspension_length_front;
 	*converted_suspension_length_rear *= current_config.m.suspension_length_rear;
@@ -708,6 +711,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	*converted_anti_roll_bar_damping_front *= current_config.m.anti_roll_bar_damping_front;
 	*converted_anti_roll_bar_damping_rear *= current_config.m.anti_roll_bar_damping_rear;
+
+	*converted_suspension_rate_front *= current_config.m.suspension_rate_front;
+	*converted_suspension_rate_rear *= current_config.m.suspension_rate_rear;
 	pthread_mutex_unlock(&current_config_mutex);
 
 	LOG("converted suspension length front %f\n", *converted_suspension_length_front);
@@ -726,6 +732,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	LOG("converted anti roll bar damping front %f\n", *converted_anti_roll_bar_damping_front);
 	LOG("converted anti roll bar damping rear %f\n", *converted_anti_roll_bar_damping_rear);
+
+	LOG("converted suspension rate front %f\n", *converted_suspension_rate_front);
+	LOG("converted suspension rate rear %f\n", *converted_suspension_rate_rear);
 
 	return ret;
 }
