@@ -676,6 +676,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_suspension_length_front = (float *)(target + 0x44);
 	float *converted_suspension_length_rear = (float *)(target + 0x48);
 
+	float *converted_suspension_rate_front = (float *)(target + 0x5c);
+	float *converted_suspension_rate_rear = (float *)(target + 0x60);
+
 	// 2 copies for some reason
 	float *converted_dampers_front_1 = (float *)(target + 0x64);
 	float *converted_dampers_rear_1 = (float *)(target + 0x68);
@@ -691,12 +694,12 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_anti_roll_bar_damping_front = (float *)(target + 0x7c);
 	float *converted_anti_roll_bar_damping_rear = (float *)(target + 0x80);
 
-	float *converted_suspension_rate_front = (float *)(target + 0x5c);
-	float *converted_suspension_rate_rear = (float *)(target + 0x60);
-
 	pthread_mutex_lock(&current_config_mutex);
 	*converted_suspension_length_front *= current_config.m.suspension_length_front;
 	*converted_suspension_length_rear *= current_config.m.suspension_length_rear;
+
+	*converted_suspension_rate_front *= current_config.m.spring_front;
+	*converted_suspension_rate_rear *= current_config.m.spring_rear;
 
 	*converted_dampers_front_1 *= current_config.m.dampers_front;
 	*converted_dampers_rear_1 *= current_config.m.dampers_rear;
@@ -712,12 +715,13 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	*converted_anti_roll_bar_damping_front *= current_config.m.anti_roll_bar_damping_front;
 	*converted_anti_roll_bar_damping_rear *= current_config.m.anti_roll_bar_damping_rear;
 
-	*converted_suspension_rate_front *= current_config.m.spring_front;
-	*converted_suspension_rate_rear *= current_config.m.spring_rear;
 	pthread_mutex_unlock(&current_config_mutex);
 
 	LOG("converted suspension length front %f\n", *converted_suspension_length_front);
 	LOG("converted suspension length rear %f\n", *converted_suspension_length_rear);
+
+	LOG("converted spring front %f\n", *converted_suspension_rate_front);
+	LOG("converted spring rear %f\n", *converted_suspension_rate_rear);
 
 	LOG("converted damper front 1 %f\n", *converted_dampers_front_1);
 	LOG("converted damper rear 1 %f\n", *converted_dampers_rear_1);
@@ -732,9 +736,6 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	LOG("converted anti roll bar damping front %f\n", *converted_anti_roll_bar_damping_front);
 	LOG("converted anti roll bar damping rear %f\n", *converted_anti_roll_bar_damping_rear);
-
-	LOG("converted suspension rate front %f\n", *converted_suspension_rate_front);
-	LOG("converted suspension rate rear %f\n", *converted_suspension_rate_rear);
 
 	return ret;
 }
