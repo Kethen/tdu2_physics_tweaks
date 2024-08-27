@@ -712,8 +712,8 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	*converted_anti_roll_bar_damping_front *= current_config.m.anti_roll_bar_damping_front;
 	*converted_anti_roll_bar_damping_rear *= current_config.m.anti_roll_bar_damping_rear;
 
-	*converted_suspension_rate_front *= current_config.m.suspension_rate_front;
-	*converted_suspension_rate_rear *= current_config.m.suspension_rate_rear;
+	*converted_suspension_rate_front *= current_config.m.spring_front;
+	*converted_suspension_rate_rear *= current_config.m.spring_rear;
 	pthread_mutex_unlock(&current_config_mutex);
 
 	LOG("converted suspension length front %f\n", *converted_suspension_length_front);

@@ -73,8 +73,8 @@ struct multipliers{
 
 	float brake_power;
 
-	float suspension_rate_front;
-	float suspension_rate_rear;
+	float spring_front;
+	float spring_rear;
 };
 
 struct config{

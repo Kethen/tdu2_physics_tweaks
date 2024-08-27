@@ -80,8 +80,8 @@ static void log_config(struct config *c){
 	PRINT_MULTIPLIER_FLOAT(grip_front);
 	PRINT_MULTIPLIER_FLOAT(grip_rear);
 	PRINT_MULTIPLIER_FLOAT(brake_power);
-	PRINT_MULTIPLIER_FLOAT(suspension_rate_front);
-	PRINT_MULTIPLIER_FLOAT(suspension_rate_rear);
+	PRINT_MULTIPLIER_FLOAT(spring_front);
+	PRINT_MULTIPLIER_FLOAT(spring_rear);
 	#undef PRINT_MULTIPLIER_FLOAT
 
 	#define PRINT_FFB_TWEAK_BOOL(name){ \
@@ -234,8 +234,8 @@ void parse_config(){
 	FETCH_MULTIPLIER(grip_front, 1.0);
 	FETCH_MULTIPLIER(grip_rear, 1.0);
 	FETCH_MULTIPLIER(brake_power, 1.0);
-	FETCH_MULTIPLIER(suspension_rate_front, 1.0);
-	FETCH_MULTIPLIER(suspension_rate_rear, 1.0);
+	FETCH_MULTIPLIER(spring_front, 1.0);
+	FETCH_MULTIPLIER(spring_rear, 1.0);
 	#undef FETCH_MULTIPLIER
 
 	#define FETCH_FFB_TWEAK(key, d) { \

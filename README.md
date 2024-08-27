@@ -90,7 +90,9 @@ The following examples adjusts vanilla cars to feel somewhere between tdu2 and t
 		"lateral_grip_rear":0.6,
 		"grip_front":0.7,
 		"grip_rear":0.7,
-		"brake_power":1.0
+		"brake_power":1.0,
+		"spring_front":0.2,
+		"spring_rear":0.2
 	},
 	"ffb_tweaks": {
 		"d1":"force feedback tweaks, applies on change",
@@ -180,7 +182,9 @@ Perhaps one day the game physics engine will be studied enough for re-implementi
 		"lateral_grip_rear":0.6,
 		"grip_front":0.7,
 		"grip_rear":0.7,
-		"brake_power":1.0
+		"brake_power":1.0,
+		"spring_front":0.2,
+		"spring_rear":0.2
 	},
 	"ffb_tweaks": {
 		"d1":"force feedback tweaks, applies on change",
