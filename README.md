@@ -72,8 +72,8 @@ The following examples adjusts vanilla cars to feel somewhere between tdu2 and t
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
-		"suspension_length_front":90.0,
-		"suspension_length_rear":90.0,
+		"suspension_length_front":120.0,
+		"suspension_length_rear":120.0,
 		"spring_front":0.5,
 		"spring_rear":0.5,
 		"dampers_front":0.5,
@@ -164,8 +164,8 @@ Perhaps one day the game physics engine will be studied enough for re-implementi
 	},
 	"multipliers":{
 		"d1":"multiply some values available in tdu2vpe during load, applies on car spawn/change",
-		"suspension_length_front":90.0,
-		"suspension_length_rear":90.0,
+		"suspension_length_front":120.0,
+		"suspension_length_rear":120.0,
 		"spring_front":0.5,
 		"spring_rear":0.5,
 		"dampers_front":0.5,
