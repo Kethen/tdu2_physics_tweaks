@@ -225,6 +225,10 @@ On linux, install `podman` from your package manager then run `build_podman.sh`.
 	- I would not know where to start at all without TDU2VPE
 - tdudec https://aluigi.altervista.org/papers.htm
 	- For Physics.cpr encryption and decryption
+- Xarlith [turboduck](https://turboduck.net/profile/15055-xarlith/)
+	- Tips on suspension adjustments
+- MeFisto94 [github](https://github.com/MeFisto94) [turboduck](https://turboduck.net/profile/38775-mefisto94/)
+	- Tips on suspension adjustments
 
 ### External projects used
 
