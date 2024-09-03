@@ -56,6 +56,8 @@ struct multipliers{
 	float dampers_rear;
 	float ride_height_front;
 	float ride_height_rear;
+	float min_ride_height_front;
+	float min_ride_height_rear;
 	float anti_roll_bar_front;
 	float anti_roll_bar_rear;
 	float anti_roll_bar_damping_front;

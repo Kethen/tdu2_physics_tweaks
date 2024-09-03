@@ -688,6 +688,10 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 	float *converted_ride_height_front = (float *)(target + 0x34);
 	float *converted_ride_height_rear = (float *)(target + 0x38);
 
+	// "max", could be height at max compression
+	float *converted_max_ride_height_front = (float *)(target + 0x3c);
+	float *converted_max_ride_height_rear = (float *)(target + 0x40);
+
 	float *converted_anti_roll_bar_front = (float *)(target + 0x74);
 	float *converted_anti_roll_bar_rear = (float *)(target + 0x78);
 
@@ -708,6 +712,9 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	*converted_ride_height_front *= current_config.m.ride_height_front;
 	*converted_ride_height_rear *= current_config.m.ride_height_rear;
+
+	*converted_max_ride_height_front *= current_config.m.min_ride_height_front;
+	*converted_max_ride_height_rear *= current_config.m.min_ride_height_rear;
 
 	*converted_anti_roll_bar_front *= current_config.m.anti_roll_bar_front;
 	*converted_anti_roll_bar_rear *= current_config.m.anti_roll_bar_rear;
@@ -730,6 +737,8 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	LOG("converted ride height front %f\n", *converted_ride_height_front);
 	LOG("converted ride height rear %f\n", *converted_ride_height_rear);
+	LOG("converted ride height front max compressed %f\n", *converted_max_ride_height_front);
+	LOG("converted ride height rear max compressed %f\n", *converted_max_ride_height_rear);
 
 	LOG("converted anti roll bar front %f\n", *converted_anti_roll_bar_front);
 	LOG("converted anti roll bar rear %f\n", *converted_anti_roll_bar_rear);

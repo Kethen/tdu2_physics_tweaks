@@ -67,6 +67,8 @@ static void log_config(struct config *c){
 	PRINT_MULTIPLIER_FLOAT(dampers_rear);
 	PRINT_MULTIPLIER_FLOAT(ride_height_front);
 	PRINT_MULTIPLIER_FLOAT(ride_height_rear);
+	PRINT_MULTIPLIER_FLOAT(min_ride_height_front);
+	PRINT_MULTIPLIER_FLOAT(min_ride_height_rear);
 	PRINT_MULTIPLIER_FLOAT(anti_roll_bar_front);
 	PRINT_MULTIPLIER_FLOAT(anti_roll_bar_rear);
 	PRINT_MULTIPLIER_FLOAT(anti_roll_bar_damping_front);
@@ -221,6 +223,8 @@ void parse_config(){
 	FETCH_MULTIPLIER(dampers_rear, 1.0);
 	FETCH_MULTIPLIER(ride_height_front, 1.0);
 	FETCH_MULTIPLIER(ride_height_rear, 1.0);
+	FETCH_MULTIPLIER(min_ride_height_front, 1.0);
+	FETCH_MULTIPLIER(min_ride_height_rear, 1.0);
 	FETCH_MULTIPLIER(anti_roll_bar_front, 1.0);
 	FETCH_MULTIPLIER(anti_roll_bar_rear, 1.0);
 	FETCH_MULTIPLIER(anti_roll_bar_damping_front, 1.0);
