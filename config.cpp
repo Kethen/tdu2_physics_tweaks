@@ -128,7 +128,6 @@ void parse_config(){
 		char *buffer = (char *)malloc(file_size);
 		if(buffer == NULL){
 			LOG("failed allocating buffer for reading the config file, using defaults\n");
-			free(buffer);
 			break;
 		}
 

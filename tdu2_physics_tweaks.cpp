@@ -24,6 +24,29 @@
 
 #define STR(s) #s
 
+#define CHECK_FRAME_LEVEL(l){ \
+	void *_frame_addr = __builtin_frame_address(l); \
+	if(_frame_addr == NULL){ \
+		LOG("%s: warning, stack might be corrupted, level %d frame address is 0\n", __func__, l); \
+	}else{ \
+		void *_ret_addr = __builtin_return_address(l); \
+		if(_ret_addr == NULL){ \
+			LOG("%s: warning, stack might be corrupted, level %d return address is 0\n", __func__, l); \
+		} \
+	} \
+}
+
+// only for investigation
+/*
+void *f0041d9e0_ref = (void *)0x0041d9e0;
+void (__attribute__((regparm(3))) *f0041d9e0_orig)(uint32_t eax, uint32_t edx, uint32_t ecx);
+void __attribute__((regparm(3))) f0041d9e0_patched(uint32_t eax, uint32_t edx, uint32_t ecx){
+	LOG("copying 16 * 4 bytes from 0x%08x to 0x%08x, ecx + 0x10 is %f, called from 0x%08x\n", ecx, eax, *(float *)(ecx + 0x10),  __builtin_return_address(0));
+	f0041d9e0_orig(eax, edx, ecx);
+	return;
+}
+*/
+
 void *f00bcfbb0_ref = (void *)0x00bcfbb0;
 void (__attribute__((stdcall)) *f00bcfbb0_orig)(float);
 void __attribute__((stdcall)) f00bcfbb0_patched(float unknown_1){
@@ -220,7 +243,21 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
 
-	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade || __builtin_return_address(4) == (void *)0x00a10057 || __builtin_return_address(4) == (void *)0x00a10356;
+	bool is_player = false;
+	CHECK_FRAME_LEVEL(0);
+	CHECK_FRAME_LEVEL(1);
+	CHECK_FRAME_LEVEL(2);
+	CHECK_FRAME_LEVEL(3);
+	void *l4_frame_address = __builtin_frame_address(4);
+	if(l4_frame_address == NULL){
+		LOG("%s: warning, stack might be corrupted, l4_frame_addr is 0\n", __func__);
+	}else{
+		void *l4_return_address = __builtin_return_address(4);
+		is_player = l4_return_address == (void *)0x00a943b7 || l4_return_address == (void *)0x009d5ade || l4_return_address == (void *)0x00a10057 || l4_return_address == (void *)0x00a10356;
+		if(l4_return_address == NULL){
+			LOG("%s: warning, stack might be corrupted, l4_return_addr is 0\n", __func__);
+		}
+	}
 
 	if(!is_player && current_config.only_modify_player_vehicle){
 		f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
@@ -667,7 +704,21 @@ uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t so
 
 	uint32_t ret = f00df3b30_orig(target, source, unknown);
 
-	bool is_player = __builtin_return_address(4) == (void *)0x00a943b7 || __builtin_return_address(4) == (void *)0x009d5ade || __builtin_return_address(4) == (void *)0x00a10057 || __builtin_return_address(4) == (void *)0x00a10356;
+	bool is_player = false;
+	CHECK_FRAME_LEVEL(0);
+	CHECK_FRAME_LEVEL(1);
+	CHECK_FRAME_LEVEL(2);
+	CHECK_FRAME_LEVEL(3);
+	void *l4_frame_address = __builtin_frame_address(4);
+	if(l4_frame_address == NULL){
+		LOG("%s: warning, stack might be corrupted, l4_frame_addr is 0\n", __func__);
+	}else{
+		void *l4_return_address = __builtin_return_address(4);
+		is_player = l4_return_address == (void *)0x00a943b7 || l4_return_address == (void *)0x009d5ade || l4_return_address == (void *)0x00a10057 || l4_return_address == (void *)0x00a10356;
+		if(l4_return_address == NULL){
+			LOG("%s: warning, stack might be corrupted, l4_return_addr is 0\n", __func__);
+		}
+	}
 
 	if(!is_player && current_config.only_modify_player_vehicle){
 		return ret;
@@ -782,6 +833,19 @@ int hook_functions(){
 		LOG("Failed initializing MinHook, %d\n", ret);
 		return -1;
 	}
+
+	/*
+	ret = MH_CreateHook(f0041d9e0_ref, (LPVOID)&f0041d9e0_patched, (LPVOID *)&f0041d9e0_orig);
+	if(ret != MH_OK){
+		LOG("Failed creating hook for 0x0041d9e0, %d\n", ret);
+		return -1;
+	}
+	ret = MH_EnableHook(f0041d9e0_ref);
+	if(ret != MH_OK){
+		LOG("Failed enableing hook for 0x0041d9e0, %d\n", ret);
+		return -1;
+	}
+	*/
 
 	ret = MH_CreateHook(f00bcfbb0_ref, (LPVOID)&f00bcfbb0_patched, (LPVOID *)&f00bcfbb0_orig);
 	if(ret != MH_OK){
