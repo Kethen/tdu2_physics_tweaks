@@ -40,6 +40,9 @@ static void log_config(struct config *c){
 	PRINT_OVERRIDE_FLOAT(max_extra_gravity);
 	PRINT_OVERRIDE_FLOAT(extra_gravity_accel_duration);
 	PRINT_OVERRIDE_FLOAT(extra_gravity_accel_delay);
+	PRINT_OVERRIDE_BOOL(abs_off);
+	PRINT_OVERRIDE_BOOL(tcs_off);
+	PRINT_OVERRIDE_BOOL(hand_brake_abs_off);
 	PRINT_OVERRIDE_BOOL(override_angular_damping);
 	PRINT_OVERRIDE_FLOAT(new_angular_damping);
 	PRINT_OVERRIDE_BOOL(steering_wheel_mode);
