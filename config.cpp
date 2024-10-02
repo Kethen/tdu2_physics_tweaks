@@ -125,16 +125,23 @@ void parse_config(){
 			break;
 		}
 
+		/*
 		char *buffer = (char *)malloc(file_size);
 		if(buffer == NULL){
 			LOG("failed allocating buffer for reading the config file, using defaults\n");
+			break;
+		}
+		*/
+		char buffer[8192];
+		if(file_size > sizeof(buffer)){
+			LOG("config file is too big, using defaults\n");
 			break;
 		}
 
 		int bytes_read = read_data_from_fd(config_fd, buffer, file_size);
 		if(bytes_read < 0){
 			LOG("failed reading tdu2_physics_tweaks_config.json, using defaults\n");
-			free(buffer);
+			//free(buffer);
 			break;
 		}
 
@@ -143,10 +150,10 @@ void parse_config(){
 		}catch(...){
 			LOG("failed parsing tdu2_physics_tweaks_config.json, using defaults\n");
 			parsed_config = {};
-			free(buffer);
+			//free(buffer);
 			break;
 		}
-		free(buffer);
+		//free(buffer);
 		break;
 	}
 	if(config_fd >= 0){
