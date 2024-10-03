@@ -22,6 +22,8 @@
 #include "dinput8_hook_adapter.h"
 #include "common.h"
 
+#include "process.h"
+
 #define STR(s) #s
 
 #define CHECK_FRAME_LEVEL(l){ \
@@ -697,12 +699,16 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 */
 
 void *f00df3b30_ref = (void *)0x00df3b30;
+/*
 uint32_t (__attribute__((stdcall)) *f00df3b30_orig)(uint32_t target, uint32_t source, uint32_t unknown);
 uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t source, uint32_t unknown){
-	LOG_VERBOSE("converting suspension performance data from 0x%08x to 0x%08x, unknown argument is 0x%08x\n", source, target, unknown);
+*/
+uint32_t (__attribute__((fastcall)) *f00df3b30_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t target, uint32_t source, uint32_t unknown_3);
+uint32_t __attribute__((fastcall)) f00df3b30_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t target, uint32_t source, uint32_t unknown_3){
+	LOG_VERBOSE("converting suspension performance data from 0x%08x to 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3\n", source, target, unknown_1, unknown_2, unknown_3);
 	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
 
-	uint32_t ret = f00df3b30_orig(target, source, unknown);
+	uint32_t ret = f00df3b30_orig(unknown_1, unknown_2, target, source, unknown_3);
 
 	bool is_player = false;
 	CHECK_FRAME_LEVEL(0);
@@ -825,7 +831,6 @@ void __attribute__((fastcall)) f0087ebf0_patched(uint32_t context){
 
 int hook_functions(){
 	LOG("hook_functions begin\n");
-
 	int ret = 0;
 
 	ret = MH_Initialize();
@@ -939,6 +944,7 @@ int hook_functions(){
 		LOG("Failed enableing hook for 0x0087ebf0, %d\n", ret);
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -959,12 +965,31 @@ void patch_gravity(){
 }
 
 void *delayed_init(void *args){
-	sleep(10);
+	sleep(15);
+
+	HANDLE threads_snap;
+	/*
+	if(suspend_threads(&threads_snap) != 0){
+		LOG("failed suspending threads, terminating process :(\n");
+		exit(1);
+	}
+	*/
+
 	if(hook_functions() != 0){
 		LOG("hooking failed, terminating process :(\n");
 		exit(1);
 	}
 	LOG("done hooking functions\n");
+
+	patch_gravity();
+	LOG("done patching gravity\n");
+
+	/*
+	if(resume_threads(threads_snap) != 0){
+		LOG("failed resuming threads, terminating process :(\n");
+		exit(1);
+	}
+	*/
 
 	return NULL;
 }
@@ -981,14 +1006,13 @@ void *config_parser_loop(void *args){
 __attribute__((constructor))
 int init(){
 	init_logging();
-	pthread_mutex_init(&current_config_mutex, NULL);
 	LOG("log initialized\n");
+
+	init_config();
+	LOG("config initialized\n");
 
 	parse_config();
 	LOG("done parsing initial config\n");
-
-	patch_gravity();
-	LOG("done patching gravity\n");
 
 	if(init_dinput8_hook() == 0){
 		LOG("done initializing ffb hooks\n");

@@ -20,8 +20,9 @@ do
 	$CPPC -g -fPIC -c common.cpp -std=c++20 -o $OUT_DIR/common.o
 	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -std=c++20 -o $OUT_DIR/config.o
 	$CPPC -g -fPIC -c dinput8_hook_adapter.cpp -std=c++20 -o $OUT_DIR/dinput8_hook_adapter.o
+	$CPPC -g -fPIC -c process.cpp -std=c++20 -o $OUT_DIR/process.o
 	$CPPC -g -fPIC -c tdu2_physics_tweaks.cpp -Iminhook_1.3.3/include -std=c++20 -o $OUT_DIR/tdu2_physics_tweaks.o -O0
-	$CPPC -g -shared -o $OUT_DIR/tdu2_physics_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/common.o $OUT_DIR/config.o $OUT_DIR/dinput8_hook_adapter.o $OUT_DIR/tdu2_physics_tweaks.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	$CPPC -g -shared -o $OUT_DIR/tdu2_physics_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/common.o $OUT_DIR/config.o $OUT_DIR/dinput8_hook_adapter.o $OUT_DIR/process.o $OUT_DIR/tdu2_physics_tweaks.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
 
 	rm $OUT_DIR/*.o
 
