@@ -883,12 +883,13 @@ void __attribute__((fastcall)) f0087ebf0_patched(uint32_t context){
 	float *extra_gravity_accel_duration = (float *)(context + 7 * 4);
 	float *extra_gravity_accel_delay = (float *)(context + 8 * 4);
 
-	pthread_mutex_lock(&current_config_mutex);
+	// called very often, if a broken value makes it through so be it, don't spam the mutex
+	//pthread_mutex_lock(&current_config_mutex);
 	*min_extra_gravity = current_config.o.min_extra_gravity;
 	*max_extra_gravity = current_config.o.max_extra_gravity;
 	*extra_gravity_accel_duration = current_config.o.extra_gravity_accel_duration;
 	*extra_gravity_accel_delay = current_config.o.extra_gravity_accel_delay;
-	pthread_mutex_unlock(&current_config_mutex);
+	//pthread_mutex_unlock(&current_config_mutex);
 
 	LOG_VERBOSE("extra gravity min %f, max %f, duration %f, delay %f\n", *min_extra_gravity, *max_extra_gravity, *extra_gravity_accel_duration, *extra_gravity_accel_delay);
 
@@ -1041,12 +1042,10 @@ void *delayed_init(void *args){
 	sleep(15);
 
 	HANDLE threads_snap;
-	/*
 	if(suspend_threads(&threads_snap) != 0){
 		LOG("failed suspending threads, terminating process :(\n");
 		exit(1);
 	}
-	*/
 
 	if(hook_functions() != 0){
 		LOG("hooking failed, terminating process :(\n");
@@ -1057,12 +1056,10 @@ void *delayed_init(void *args){
 	patch_gravity();
 	LOG("done patching gravity\n");
 
-	/*
 	if(resume_threads(threads_snap) != 0){
 		LOG("failed resuming threads, terminating process :(\n");
 		exit(1);
 	}
-	*/
 
 	return NULL;
 }
