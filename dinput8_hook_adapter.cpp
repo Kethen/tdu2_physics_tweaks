@@ -32,8 +32,8 @@ static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT 
 	if(*effect_guid == GUID_Spring && *modified_items & DIEP_TYPESPECIFICPARAMS && params->lpvTypeSpecificParams != NULL){
 		DICONDITION *condition = (DICONDITION *)params->lpvTypeSpecificParams;
 		// potential settings
-		int new_spring_effect_max = 10000;
-		int new_spring_effect_min = 6000;
+		int new_spring_effect_max = current_config.f.spring_effect_max;
+		int new_spring_effect_min = current_config.f.spring_effect_min;
 		float current_slip_ratio = calculate_new_slip_ratio(global.brake_pedal_level);
 
 		// roughly 1000 - 9500, rescale it and spice it up
