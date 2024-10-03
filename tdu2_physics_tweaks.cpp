@@ -49,6 +49,17 @@ void __attribute__((regparm(3))) f0041d9e0_patched(uint32_t eax, uint32_t edx, u
 }
 */
 
+void dump_memory(const char *path, uint8_t *buffer, int size){
+	int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 00644);
+	if(fd < 0){
+		LOG("failed dumping memory from 0x%08x for 0x%08x bytes to %s\n", buffer, size, path);
+		return;
+	}
+	write_data_to_fd(fd, (char *)buffer, size);
+	close(fd);
+	return;
+}
+
 void *f00bcfbb0_ref = (void *)0x00bcfbb0;
 void (__attribute__((stdcall)) *f00bcfbb0_orig)(float);
 void __attribute__((stdcall)) f00bcfbb0_patched(float unknown_1){
@@ -242,10 +253,8 @@ void __attribute__((stdcall)) f00bacd50_patched(uint32_t unknown_1, uint32_t unk
 void *f00baddd0_ref = (void *)0x00baddd0;
 void (__attribute__((stdcall)) *f00baddd0_orig)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t unknown_3, uint32_t unknown_4, uint32_t unknown_5, uint32_t unknown_6){
-	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
-	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
-
 	bool is_player = false;
+	/*
 	CHECK_FRAME_LEVEL(0);
 	CHECK_FRAME_LEVEL(1);
 	CHECK_FRAME_LEVEL(2);
@@ -260,6 +269,37 @@ void __attribute__((stdcall)) f00baddd0_patched(uint32_t unknown_1, uint32_t unk
 			LOG("%s: warning, stack might be corrupted, l4_return_addr is 0\n", __func__);
 		}
 	}
+
+	LOG("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
+
+	static int dump_idx = -1;
+	dump_idx++;
+	char path_buf[128];
+	int path_len = snprintf(path_buf, sizeof(path_buf), "unknown_6_%s_0x%08x_dump_%d", is_player? "is_player": "is_not_player", unknown_6, dump_idx);
+	dump_memory(path_buf, (uint8_t *)unknown_6, 0x100);
+	if(dump_idx == 9){
+		dump_idx = -1;
+	}
+	*/
+
+	uint8_t *is_player_check_1 = (uint8_t *)(unknown_6 + 0xf1);
+	uint8_t *is_player_check_2 = (uint8_t *)(unknown_6 + 0xf2);
+	is_player = *is_player_check_2 == 1 && *is_player_check_1 == 0;
+
+	/*
+	if(*is_player_check != 0 && !is_player){
+		static int dump_idx = -1;
+		dump_idx++;
+		char path_buf[128];
+		int path_len = snprintf(path_buf, sizeof(path_buf), "false_positive_unknown_6_%s_0x%08x_dump_%d", is_player? "is_player": "is_not_player", unknown_6, dump_idx);
+		dump_memory(path_buf, (uint8_t *)unknown_6, 0x100);
+		if(dump_idx == 9){
+			dump_idx = -1;
+		}
+	}
+	*/
+
+	LOG_VERBOSE("converting grip/aero performance, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3 0x%08x, unknown_4 0x%08x, unknown_5 0x%08x, unknown_6 0x%08x, is_player %s\n", unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6, is_player? "true": "false");
 
 	if(!is_player && current_config.only_modify_player_vehicle){
 		f00baddd0_orig(unknown_1, unknown_2, unknown_3, unknown_4, unknown_5, unknown_6);
@@ -699,18 +739,20 @@ uint32_t __attribute__((stdcall)) f00bdb970_patched(uint32_t source, uint32_t un
 */
 
 void *f00df3b30_ref = (void *)0x00df3b30;
-/*
 uint32_t (__attribute__((stdcall)) *f00df3b30_orig)(uint32_t target, uint32_t source, uint32_t unknown);
 uint32_t __attribute__((stdcall)) f00df3b30_patched(uint32_t target, uint32_t source, uint32_t unknown){
-*/
+/*
 uint32_t (__attribute__((fastcall)) *f00df3b30_orig)(uint32_t unknown_1, uint32_t unknown_2, uint32_t target, uint32_t source, uint32_t unknown_3);
 uint32_t __attribute__((fastcall)) f00df3b30_patched(uint32_t unknown_1, uint32_t unknown_2, uint32_t target, uint32_t source, uint32_t unknown_3){
 	LOG_VERBOSE("converting suspension performance data from 0x%08x to 0x%08x, unknown_1 0x%08x, unknown_2 0x%08x, unknown_3\n", source, target, unknown_1, unknown_2, unknown_3);
-	LOG_VERBOSE("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
-
 	uint32_t ret = f00df3b30_orig(unknown_1, unknown_2, target, source, unknown_3);
 
+*/
+
+	uint32_t ret = f00df3b30_orig(target, source, unknown);
+
 	bool is_player = false;
+	/*
 	CHECK_FRAME_LEVEL(0);
 	CHECK_FRAME_LEVEL(1);
 	CHECK_FRAME_LEVEL(2);
@@ -725,6 +767,37 @@ uint32_t __attribute__((fastcall)) f00df3b30_patched(uint32_t unknown_1, uint32_
 			LOG("%s: warning, stack might be corrupted, l4_return_addr is 0\n", __func__);
 		}
 	}
+
+	LOG("return stack 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x -> 0x%08x\n", __builtin_return_address(0), __builtin_return_address(1), __builtin_return_address(2), __builtin_return_address(3), __builtin_return_address(4));
+
+	static int dump_idx = -1;
+	dump_idx++;
+	char path_buf[128];
+	int path_len = snprintf(path_buf, sizeof(path_buf), "target_%s_0x%08x_dump_%d", is_player? "is_player": "is_not_player", target, dump_idx);
+	dump_memory(path_buf, (uint8_t *)target, 0x100);
+	if(dump_idx == 9){
+		dump_idx = -1;
+	}
+	*/
+
+	uint8_t *is_player_check_1 = (uint8_t *)(target + 0xf1);
+	uint8_t *is_player_check_2 = (uint8_t *)(target + 0xf2);
+	is_player = *is_player_check_2 == 1 && *is_player_check_1 == 0;
+
+	/*
+	if(*is_player_check != 0 && !is_player){
+		static int dump_idx = -1;
+		dump_idx++;
+		char path_buf[128];
+		int path_len = snprintf(path_buf, sizeof(path_buf), "false_positive_target_%s_0x%08x_dump_%d", is_player? "is_player": "is_not_player", target, dump_idx);
+		dump_memory(path_buf, (uint8_t *)target, 0x100);
+		if(dump_idx == 9){
+			dump_idx = -1;
+		}
+	}
+	*/
+
+	LOG_VERBOSE("converting suspension performance data from 0x%08x to 0x%08x, unknown 0x%08x, is_player %s\n", source, target, unknown, is_player? "true": "false");
 
 	if(!is_player && current_config.only_modify_player_vehicle){
 		return ret;
