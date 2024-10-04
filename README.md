@@ -2,6 +2,10 @@
 
 Nudge tdu2 overall car handling to your own liking :D
 
+### Known issues
+
+- The plugin causes game crashes on the 21MB exe and I have yet to find out why
+
 ### Installation on Windows
 
 Place `dinput8.dll`, `MinHook.x86.dll`, `tdu2_physics_tweaks_config.json`, `dinput8_ffb_tweaks_i686.dll` and `tdu2_physics_tweaks_i686.asi` next to TestDrive2.exe.
