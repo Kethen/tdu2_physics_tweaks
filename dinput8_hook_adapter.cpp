@@ -92,7 +92,7 @@ int init_dinput8_hook(){
 	const char *lib_path = "dinput8_ffb_tweaks_i686.dll";
 	HMODULE lib = LoadLibraryA(lib_path);
 	if(lib == NULL){
-		LOG("Failed loading %s, ffb tweaks disabled\n", lib_path);
+		LOG("Failed loading %s, 0x%08x, ffb tweaks disabled\n", lib_path, GetLastError());
 		return -1;
 	}
 
