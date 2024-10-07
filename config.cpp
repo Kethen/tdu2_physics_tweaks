@@ -136,7 +136,7 @@ void parse_config(){
 		}
 		*/
 		char buffer[8192];
-		if(file_size > sizeof(buffer)){
+		if(file_size >= sizeof(buffer)){
 			LOG("config file is too big, using defaults\n");
 			break;
 		}
@@ -147,9 +147,10 @@ void parse_config(){
 			//free(buffer);
 			break;
 		}
+		buffer[bytes_read] = '\0';
 
 		try{
-			parsed_config = json::parse(std::string(buffer, bytes_read));
+			parsed_config = json::parse(buffer);
 		}catch(...){
 			LOG("failed parsing tdu2_physics_tweaks_config.json, using defaults\n");
 			parsed_config = {};
