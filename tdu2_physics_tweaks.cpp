@@ -1090,9 +1090,11 @@ int init(){
 
 	pthread_t delayed_init_thread;
 	pthread_create(&delayed_init_thread, NULL, delayed_init, NULL);
+	pthread_setname_np(delayed_init_thread, "+delayed init");
 
 	pthread_t config_reparse_thread;
 	pthread_create(&config_reparse_thread, NULL, config_parser_loop, NULL);
+	pthread_setname_np(config_reparse_thread, "+config reparse");
 
 	return 0;
 }
