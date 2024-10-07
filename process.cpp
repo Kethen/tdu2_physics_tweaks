@@ -26,7 +26,7 @@ int suspend_threads(HANDLE *threads_snap){
 	te32.dwSize = sizeof(THREADENTRY32);
 	if(!Thread32First(*threads_snap, &te32)){
 		CloseHandle(*threads_snap);
-		LOG("failed fetching the first thread entry, not suspending threads\n");
+		LOG("failed fetching the first thread entry, 0x%08x, not suspending threads\n", GetLastError());
 		return -1;
 	}
 
@@ -57,9 +57,10 @@ int resume_threads(HANDLE threads_snap){
 
 	THREADENTRY32 te32;
 
+	te32.dwSize = sizeof(THREADENTRY32);
 	if(!Thread32First(threads_snap, &te32)){
 		CloseHandle(threads_snap);
-		LOG("failed fetching the first thread entry, not resuming threads\n");
+		LOG("failed fetching the first thread entry, 0x%08x, not resuming threads\n", GetLastError());
 		return -1;
 	}
 
