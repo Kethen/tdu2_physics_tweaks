@@ -24,6 +24,8 @@
 
 #include "process.h"
 
+#include "malloc_redirect.h"
+
 #define STR(s) #s
 
 #define CHECK_FRAME_LEVEL(l){ \
@@ -1086,6 +1088,13 @@ int init(){
 
 	if(init_dinput8_hook() == 0){
 		LOG("done initializing ffb hooks\n");
+	}
+
+	if(malloc_redirect() != 0){
+		LOG("failed redirecting malloc, terminating :(\n");
+		exit(1);
+	}else{
+		LOG("done redirecting malloc\n");
 	}
 
 	pthread_t delayed_init_thread;
