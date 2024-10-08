@@ -24,6 +24,8 @@
 
 #include "process.h"
 
+#include "heap_compact.h"
+
 #define STR(s) #s
 
 #define CHECK_FRAME_LEVEL(l){ \
@@ -1086,6 +1088,12 @@ int init(){
 
 	if(init_dinput8_hook() == 0){
 		LOG("done initializing ffb hooks\n");
+	}
+
+	if(hook_heap_compact() != 0){
+		LOG("Failed hooking heap compact, terminating :(\n");
+	}else{
+		LOG("done hooking heap compact\n");
 	}
 
 	pthread_t delayed_init_thread;
