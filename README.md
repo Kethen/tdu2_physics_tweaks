@@ -237,3 +237,4 @@ On linux, install `podman` from your package manager then run `build_podman.sh`.
 - MinHook https://github.com/TsudaKageyu/minhook
 - json https://github.com/nlohmann/json
 - Ultimate-ASI-Loader https://github.com/ThirteenAG/Ultimate-ASI-Loader
+- llvm-mingw https://github.com/mstorsjo/llvm-mingw

@@ -1,4 +1,4 @@
-IMAGE_NAME=docker.io/mstorsjo/llvm-mingw:latest
+IMAGE_NAME=docker.io/mstorsjo/llvm-mingw:20241001
 
 podman run \
 	--rm -it \
