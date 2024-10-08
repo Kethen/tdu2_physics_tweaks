@@ -2,6 +2,8 @@
 
 #include <dinput.h>
 
+#include <stdint.h>
+
 #include "logging.h"
 #include "config.h"
 #include "common.h"
@@ -92,7 +94,7 @@ int init_dinput8_hook(){
 	const char *lib_path = "dinput8_ffb_tweaks_i686.dll";
 	HMODULE lib = LoadLibraryA(lib_path);
 	if(lib == NULL){
-		LOG("Failed loading %s, 0x%08x, ffb tweaks disabled\n", lib_path, GetLastError());
+		LOG("Failed loading %s, 0x%08x, ffb tweaks disabled\n", lib_path, (uint32_t)GetLastError());
 		return -1;
 	}
 

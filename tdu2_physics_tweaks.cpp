@@ -52,7 +52,7 @@ void __attribute__((regparm(3))) f0041d9e0_patched(uint32_t eax, uint32_t edx, u
 void dump_memory(const char *path, uint8_t *buffer, int size){
 	int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, 00644);
 	if(fd < 0){
-		LOG("failed dumping memory from 0x%08x for 0x%08x bytes to %s\n", buffer, size, path);
+		LOG("failed dumping memory from 0x%08x for 0x%08x bytes to %s\n", (uint32_t)buffer, size, path);
 		return;
 	}
 	write_data_to_fd(fd, (char *)buffer, size);

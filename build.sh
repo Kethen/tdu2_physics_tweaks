@@ -14,15 +14,19 @@ do
 	fi
 	cp minhook_1.3.3/bin/${min_hook_lib}.dll $OUT_DIR
 
-	CPPC=${arch}-w64-mingw32-g++
-	CC=${arch}-w64-mingw32-gcc
+	CSTD="-std=c11"
+	CPPSTD="-std=c++11"
+	CPPC="${arch}-w64-mingw32-clang++ $CPPSTD -stdlib=libc++"
+	CC="${arch}-w64-mingw32-clang $CSTD"
+	LINKER="${arch}-w64-mingw32-clang++ -stdlib=libc++"
+
 	$CC -g -fPIC -c logging.c -o $OUT_DIR/logging.o -O2
-	$CPPC -g -fPIC -c common.cpp -std=c++20 -o $OUT_DIR/common.o -O2
-	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -std=c++20 -o $OUT_DIR/config.o -O2
-	$CPPC -g -fPIC -c dinput8_hook_adapter.cpp -std=c++20 -o $OUT_DIR/dinput8_hook_adapter.o -O2
-	$CPPC -g -fPIC -c process.cpp -std=c++20 -o $OUT_DIR/process.o -O2
-	$CPPC -g -fPIC -c tdu2_physics_tweaks.cpp -Iminhook_1.3.3/include -std=c++20 -o $OUT_DIR/tdu2_physics_tweaks.o -O0
-	$CPPC -g -shared -o $OUT_DIR/tdu2_physics_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/common.o $OUT_DIR/config.o $OUT_DIR/dinput8_hook_adapter.o $OUT_DIR/process.o $OUT_DIR/tdu2_physics_tweaks.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
+	$CPPC -g -fPIC -c common.cpp -o $OUT_DIR/common.o -O2
+	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -o $OUT_DIR/config.o -O2
+	$CPPC -g -fPIC -c dinput8_hook_adapter.cpp -o $OUT_DIR/dinput8_hook_adapter.o -O2
+	$CPPC -g -fPIC -c process.cpp -o $OUT_DIR/process.o -O2
+	$CPPC -g -fPIC -c tdu2_physics_tweaks.cpp -Iminhook_1.3.3/include -o $OUT_DIR/tdu2_physics_tweaks.o -O0
+	$LINKER -shared $OUT_DIR/logging.o $OUT_DIR/common.o $OUT_DIR/config.o $OUT_DIR/dinput8_hook_adapter.o $OUT_DIR/process.o $OUT_DIR/tdu2_physics_tweaks.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -Wl,-Bstatic -lc++ -l${min_hook_lib} -o $OUT_DIR/tdu2_physics_tweaks_${arch}.asi
 
 	rm $OUT_DIR/*.o
 
