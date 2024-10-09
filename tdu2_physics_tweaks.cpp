@@ -24,6 +24,8 @@
 
 #include "process.h"
 
+#include "memory_hack.h"
+
 #define STR(s) #s
 
 #define CHECK_FRAME_LEVEL(l){ \
@@ -1087,6 +1089,8 @@ int init(){
 	if(init_dinput8_hook() == 0){
 		LOG("done initializing ffb hooks\n");
 	}
+
+	start_memory_hack_hooking_thread();
 
 	pthread_t delayed_init_thread;
 	pthread_create(&delayed_init_thread, NULL, delayed_init, NULL);
